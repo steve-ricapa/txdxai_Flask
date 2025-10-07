@@ -46,8 +46,8 @@ def register():
     
     log_audit('REGISTER', 'USER', user.id, {'username': username, 'role': 'ADMIN'})
     
-    access_token = create_access_token(identity=user.id)
-    refresh_token = create_refresh_token(identity=user.id)
+    access_token = create_access_token(identity=str(user.id))
+    refresh_token = create_refresh_token(identity=str(user.id))
     
     return jsonify({
         'message': 'Admin user registered successfully',
@@ -75,8 +75,8 @@ def login():
     if not user or not user.check_password(password):
         raise UnauthorizedError('Invalid username or password')
     
-    access_token = create_access_token(identity=user.id)
-    refresh_token = create_refresh_token(identity=user.id)
+    access_token = create_access_token(identity=str(user.id))
+    refresh_token = create_refresh_token(identity=str(user.id))
     
     log_audit('LOGIN', 'USER', user.id)
     

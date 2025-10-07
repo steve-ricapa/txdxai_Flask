@@ -25,6 +25,10 @@ def store_secret(secret_name, secret_value):
         client = get_keyvault_client()
         client.set_secret(secret_name, secret_value)
         return secret_name
+    except ValueError as e:
+        if 'Azure Key Vault configuration is incomplete' in str(e):
+            return None
+        raise Exception(f'Failed to store secret in Key Vault: {str(e)}')
     except Exception as e:
         raise Exception(f'Failed to store secret in Key Vault: {str(e)}')
 

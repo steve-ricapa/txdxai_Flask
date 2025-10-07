@@ -23,16 +23,22 @@ def authenticate_agent():
     if not company_id or not agent_access_key:
         raise ValidationError('companyId and agentAccessKey are required')
     
-    instance = AgentInstance.query.filter_by(
+    instances = AgentInstance.query.filter_by(
         company_id=company_id,
         agent_type=agent_type,
         status='ACTIVE'
-    ).first()
+    ).all()
     
-    if not instance:
+    if not instances:
         raise UnauthorizedError('Invalid credentials')
     
-    if not verify_access_key(agent_access_key, instance.client_access_key_hash):
+    instance = None
+    for candidate in instances:
+        if verify_access_key(agent_access_key, candidate.client_access_key_hash):
+            instance = candidate
+            break
+    
+    if not instance:
         raise UnauthorizedError('Invalid credentials')
     
     instance.last_used_at = datetime.utcnow()

@@ -6,7 +6,7 @@ from txdxai.db.models import User
 def get_current_user():
     verify_jwt_in_request()
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = User.query.get(int(user_id))
     if not user:
         raise UnauthorizedError('User not found')
     return user

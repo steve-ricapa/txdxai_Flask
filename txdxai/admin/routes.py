@@ -30,13 +30,14 @@ def create_agent_instance():
     
     keyvault_secret_id = None
     if azure_project_id:
+        import json
         azure_credentials = {
             'azure_project_id': azure_project_id,
             'region': region,
             'model': model
         }
         secret_name = f"agent-{agent_type.lower()}-{company_id}-{datetime.utcnow().timestamp()}"
-        keyvault_secret_id = store_secret(secret_name, azure_credentials)
+        keyvault_secret_id = store_secret(secret_name, json.dumps(azure_credentials))
     
     settings = {
         'region': region,

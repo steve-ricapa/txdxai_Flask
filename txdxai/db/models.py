@@ -164,7 +164,7 @@ class AuditLog(db.Model):
     actor_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     action = db.Column(db.String(100), nullable=False)
     entity_type = db.Column(db.String(100), nullable=False)
-    entity_id = db.Column(db.Integer, nullable=True)
+    entity_id = db.Column(db.String(255), nullable=True)
     payload = db.Column(db.JSON, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
