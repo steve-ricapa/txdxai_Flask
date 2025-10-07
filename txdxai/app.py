@@ -58,6 +58,8 @@ def create_app(config_class=Config):
     from txdxai.alerts import alerts_bp
     from txdxai.vulnerabilities import vulnerabilities_bp
     from txdxai.analytics import analytics_bp
+    from txdxai.admin import admin_bp
+    from txdxai.agents import agents_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(companies_bp)
@@ -68,6 +70,8 @@ def create_app(config_class=Config):
     app.register_blueprint(alerts_bp)
     app.register_blueprint(vulnerabilities_bp)
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(agents_bp)
     
     app.register_error_handler(TxDxAIError, handle_error)
     app.register_error_handler(Exception, handle_error)
