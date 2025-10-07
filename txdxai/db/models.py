@@ -1,4 +1,5 @@
 from datetime import datetime
+import uuid
 from txdxai.extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -279,3 +280,35 @@ class Vulnerability(db.Model):
             'meta_info': self.meta_info,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+
+
+class AgentInstance(db.Model):
+    __tablename__ = 'agent_instances'
+    
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id', ondelete='CASCADE'), nullable=False)
+    agent_type = db.Column(db.String(50), nullable=False, default='SOPHIA')
+    azure_project_id = db.Column(db.String(255), nullable=True)
+    azure_agent_id = db.Column(db.String(255), nullable=True)
+    azure_vector_store_id = db.Column(db.String(255), nullable=True)
+    keyvault_secret_id = db.Column(db.String(255), nullable=True)
+    client_access_key_hash = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='ACTIVE')
+    settings = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_used_at = db.Column(db.DateTime, nullable=True)
+    
+    def to_dict(self, show_key_hint=False):
+        data = {
+            'id': self.id,
+            'company_id': self.company_id,
+            'agent_type': self.agent_type,
+            'azure_project_id': self.azure_project_id,
+            'azure_agent_id': self.azure_agent_id,
+            'azure_vector_store_id': self.azure_vector_store_id,
+            'status': self.status,
+            'settings': self.settings,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'last_used_at': self.last_used_at.isoformat() if self.last_used_at else None
+        }
+        return data

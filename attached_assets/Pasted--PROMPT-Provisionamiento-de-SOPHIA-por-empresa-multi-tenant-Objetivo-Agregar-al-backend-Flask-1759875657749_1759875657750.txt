@@ -1,0 +1,94 @@
+🔸 PROMPT — Provisionamiento de SOPHIA por empresa (multi-tenant)
+
+Objetivo
+Agregar al backend Flask soporte para crear y gestionar instancias de agente SOPHIA por empresa. Cada empresa tendrá:
+
+Una instancia SOPHIA en Azure AI (IDs guardados).
+
+Una llave única de acceso (“agent_access_key”) para que su app cliente consuma el agente vía nuestro backend.
+
+Credenciales de Azure guardadas en Azure Key Vault; en DB solo referencias (no secretos en claro).
+
+Modelo de datos (nuevas tablas/campos)
+
+agent_instances
+
+id (uuid), company_id (FK), agent_type (enum: SOPHIA),
+
+azure_project_id, azure_agent_id, azure_vector_store_id (nullable),
+
+keyvault_secret_id (puntero a credenciales Azure/keys),
+
+client_access_key_hash (hash de la llave única), status (ACTIVE|DISABLED),
+
+created_at, last_used_at
+
+(opcional) agent_instance_settings (json por instancia) para region, model, capabilities.
+
+Endpoints (solo backend, sin UI; JWT requerido)
+
+POST /admin/agent-instances (ADMIN)
+
+Body: { companyId, agentType:"SOPHIA", region, model, azureProjectId? }
+
+Acciones:
+
+(Placeholder) Crear/validar agente en Azure AI (si azureProjectId llega nulo, solo registrar y dejar “to-provision”).
+
+Generar agent_access_key (32–40 chars, aleatoria), almacenar hash (bcrypt) en DB, jamás en claro.
+
+Guardar credenciales/keys Azure en Key Vault y registrar keyvault_secret_id.
+
+Responder una sola vez la llave en claro + metadatos (solo en el create).
+
+GET /admin/agent-instances (ADMIN) → lista por empresa.
+
+GET /admin/agent-instances/{id} (ADMIN) → detalle (enmascarar keys: mostrar solo últimos 4 de la llave).
+
+POST /admin/agent-instances/{id}/rotate-key (ADMIN) → genera nueva llave, actualiza hash, devuelve solo una vez.
+
+PATCH /admin/agent-instances/{id} (ADMIN) → actualizar status, settings, azure_*_id.
+
+DELETE /admin/agent-instances/{id} (ADMIN) → desactivar/eliminar (soft-delete o status=DISABLED).
+
+Autenticación para apps cliente de la empresa
+
+Añadir endpoint: POST /agents/auth/token (public)
+
+Body: { companyId, agentType:"SOPHIA", agentAccessKey }
+
+Verificar agentAccessKey contra client_access_key_hash (bcrypt).
+
+Si OK, emitir JWT de servicio (scopes limitados: agent:invoke, company:{id}) con TTL corto (ej. 1h).
+
+Todas las rutas de agente (futuras) exigirán este JWT de servicio además del multi-tenant.
+
+Seguridad y almacenamiento
+
+NUNCA guardar agent_access_key en claro.
+
+Guardar tokens/credenciales Azure en Key Vault y referenciarlas con keyvault_secret_id.
+
+Registrar auditoría en audit_logs para: create/rotate/disable y auth de agentes.
+
+OpenAPI
+
+Actualizar openapi/openapi.yaml con los paths anteriores, esquemas de request/response y ejemplos.
+
+Marcar POST /admin/agent-instances y …/rotate-key como respuestas que devuelven la llave en claro solo una vez.
+
+Extras técnicos
+
+Crear helper security/keys.py para generar llaves y hashearlas (bcrypt).
+
+Añadir tasa límite a POST /agents/auth/token.
+
+Preparar placeholders para integración real con SDK azure-ai-agents (crear azure_agent_id, azure_vector_store_id cuando se active el provisioning).
+
+Importante
+
+No UI. Si necesitas probar, añade requests cURL y tests.
+
+Mantener multi-tenant y JWT existentes.
+
+Respetar estructura del repo actual.

@@ -13,8 +13,8 @@ def get_systems_status():
     
     systems = System.query.filter_by(company_id=user.company_id).all()
     
-    total_health = sum([s.health_score for s in systems if s.health_score is not None])
-    avg_health = total_health / len(systems) if systems else 0
+    systems_with_health = [s for s in systems if s.health_score is not None]
+    avg_health = sum([s.health_score for s in systems_with_health]) / len(systems_with_health) if systems_with_health else 0
     
     status_summary = {
         'total_systems': len(systems),
