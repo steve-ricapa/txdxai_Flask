@@ -186,8 +186,11 @@ class System(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id', ondelete='CASCADE'), nullable=False)
     integration_id = db.Column(db.Integer, db.ForeignKey('integrations.id', ondelete='CASCADE'), nullable=False)
     name = db.Column(db.String(255), nullable=False)
+    type = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(20), nullable=False, default='online')
+    health_score = db.Column(db.Float, nullable=True)
     details = db.Column(db.JSON, nullable=True)
+    meta_info = db.Column(db.JSON, nullable=True)
     last_check = db.Column(db.DateTime, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -197,8 +200,10 @@ class System(db.Model):
             'company_id': self.company_id,
             'integration_id': self.integration_id,
             'name': self.name,
+            'type': self.type,
             'status': self.status,
-            'details': self.details,
+            'health_score': self.health_score,
+            'meta_info': self.meta_info,
             'last_check': self.last_check.isoformat() if self.last_check else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

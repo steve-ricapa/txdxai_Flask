@@ -13,11 +13,16 @@ def get_systems_status():
     
     systems = System.query.filter_by(company_id=user.company_id).all()
     
+    total_health = sum([s.health_score for s in systems if s.health_score is not None])
+    avg_health = total_health / len(systems) if systems else 0
+    
     status_summary = {
+        'total_systems': len(systems),
         'online': len([s for s in systems if s.status == 'online']),
-        'warning': len([s for s in systems if s.status == 'warning']),
-        'alert': len([s for s in systems if s.status == 'alert']),
-        'total': len(systems)
+        'offline': len([s for s in systems if s.status == 'offline']),
+        'degraded': len([s for s in systems if s.status == 'degraded']),
+        'unknown': len([s for s in systems if s.status == 'unknown']),
+        'average_health_score': round(avg_health, 2)
     }
     
     log_audit('VIEW', 'SYSTEMS_STATUS', None, status_summary)
