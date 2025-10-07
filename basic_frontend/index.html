@@ -229,6 +229,101 @@
         </div>
 
         <div class="section">
+            <h2>🖥️ Systems</h2>
+            <button onclick="getSystemStatus()">Get System Status</button>
+            <button onclick="getAllSystems()">Get All Systems</button>
+        </div>
+
+        <div class="section">
+            <h2>🚨 Alerts</h2>
+            <div class="grid">
+                <div>
+                    <h3>Get Active Alerts</h3>
+                    <div class="form-group">
+                        <label>Limit</label>
+                        <input type="number" id="alertLimit" value="100" placeholder="100">
+                    </div>
+                    <button onclick="getActiveAlerts()">Get Active Alerts</button>
+                </div>
+                <div>
+                    <h3>Resolve Alert</h3>
+                    <div class="form-group">
+                        <label>Alert ID</label>
+                        <input type="number" id="resolveAlertId" placeholder="1">
+                    </div>
+                    <button onclick="resolveAlert()">Resolve Alert</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🛡️ Vulnerabilities</h2>
+            <div class="grid">
+                <div>
+                    <h3>Get Vulnerabilities</h3>
+                    <div class="form-group">
+                        <label>Status Filter (Optional)</label>
+                        <select id="vulnStatus">
+                            <option value="">All</option>
+                            <option value="open">Open</option>
+                            <option value="patching">Patching</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Severity Filter (Optional)</label>
+                        <select id="vulnSeverity">
+                            <option value="">All</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <button onclick="getVulnerabilities()">Get Vulnerabilities</button>
+                </div>
+                <div>
+                    <h3>Patch Vulnerability</h3>
+                    <div class="form-group">
+                        <label>Vulnerability ID</label>
+                        <input type="number" id="patchVulnId" placeholder="1">
+                    </div>
+                    <button onclick="patchVulnerability()">Initiate Patch</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Analytics</h2>
+            <div class="grid">
+                <div>
+                    <h3>Incident Analytics</h3>
+                    <div class="form-group">
+                        <label>Hours</label>
+                        <input type="number" id="incidentHours" value="24" placeholder="24">
+                    </div>
+                    <button onclick="getIncidentAnalytics()">Get Incident Analytics</button>
+                </div>
+                <div>
+                    <h3>Response Time Analytics</h3>
+                    <div class="form-group">
+                        <label>Days</label>
+                        <input type="number" id="responseTimeDays" value="7" placeholder="7">
+                    </div>
+                    <button onclick="getResponseTimeAnalytics()">Get Response Time</button>
+                </div>
+            </div>
+            <div class="grid">
+                <div>
+                    <button onclick="getVulnDistribution()">Get Vulnerability Distribution</button>
+                </div>
+                <div>
+                    <button onclick="getAnalyticsSummary()">Get Analytics Summary</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
             <h2>📋 Response</h2>
             <div id="response" class="response">No request sent yet...</div>
         </div>
@@ -341,6 +436,64 @@
 
         async function getCompany() {
             await apiRequest('GET', '/companies');
+        }
+
+        async function getSystemStatus() {
+            await apiRequest('GET', '/systems/status');
+        }
+
+        async function getAllSystems() {
+            await apiRequest('GET', '/systems');
+        }
+
+        async function getActiveAlerts() {
+            const limit = document.getElementById('alertLimit').value;
+            await apiRequest('GET', `/alerts/active?limit=${limit}`);
+        }
+
+        async function resolveAlert() {
+            const alertId = document.getElementById('resolveAlertId').value;
+            if (!alertId) {
+                showResponse({ error: 'Please enter an Alert ID' }, true);
+                return;
+            }
+            await apiRequest('POST', `/alerts/${alertId}/resolve`);
+        }
+
+        async function getVulnerabilities() {
+            const status = document.getElementById('vulnStatus').value;
+            const severity = document.getElementById('vulnSeverity').value;
+            let endpoint = '/vulnerabilities?';
+            if (status) endpoint += `status=${status}&`;
+            if (severity) endpoint += `severity=${severity}&`;
+            await apiRequest('GET', endpoint);
+        }
+
+        async function patchVulnerability() {
+            const vulnId = document.getElementById('patchVulnId').value;
+            if (!vulnId) {
+                showResponse({ error: 'Please enter a Vulnerability ID' }, true);
+                return;
+            }
+            await apiRequest('POST', `/vulnerabilities/${vulnId}/patch`);
+        }
+
+        async function getIncidentAnalytics() {
+            const hours = document.getElementById('incidentHours').value;
+            await apiRequest('GET', `/analytics/incidents?hours=${hours}`);
+        }
+
+        async function getResponseTimeAnalytics() {
+            const days = document.getElementById('responseTimeDays').value;
+            await apiRequest('GET', `/analytics/response-time?days=${days}`);
+        }
+
+        async function getVulnDistribution() {
+            await apiRequest('GET', '/analytics/vulnerability-distribution');
+        }
+
+        async function getAnalyticsSummary() {
+            await apiRequest('GET', '/analytics/summary');
         }
     </script>
 </body>
