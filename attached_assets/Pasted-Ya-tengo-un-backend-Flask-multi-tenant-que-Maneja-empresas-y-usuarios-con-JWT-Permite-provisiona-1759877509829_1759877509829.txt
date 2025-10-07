@@ -1,0 +1,88 @@
+Ya tengo un backend Flask multi-tenant que:
+
+Maneja empresas y usuarios con JWT.
+
+Permite provisionar una instancia de SOPHIA por empresa (agent_instances) con su azure_agent_id, vector_store_id y un agent_access_key seguro.
+
+Integra Key Vault para credenciales.
+
+Ahora quiero construir el servicio SOPHIA usando el nuevo Microsoft Agent Framework (Azure AI Agents) como agente RAG.
+
+Objetivo de SOPHIA
+
+RAG: usar vector stores (por empresa/usuario) para responder preguntas sobre documentación y datos de seguridad.
+
+Refresh inicial: cada vez que se inicia, SOPHIA actualiza su base de conocimiento desde fuentes principales (docs internos, Splunk, Palo Alto, Grafana).
+
+Conversación continua: mantener sesiones (threads) con memoria de largo plazo para cada usuario.
+
+Handoff a VICTORIA: si detecta que el usuario pide una acción (provisioning, troubleshooting), debe invocar un tool REST create_ticket que llama al endpoint del backend /victoria/report.
+
+Multi-tenant: cada instancia SOPHIA se configura con sus propias credenciales y vector stores según la empresa.
+
+Requerimientos técnicos
+
+Implementar como servicio Flask separado (sophia_service/).
+
+Usar el SDK del Microsoft Agent Framework (azure-ai-agents) en Python.
+
+Definir un agente principal:
+
+Prompt: “Eres SOPHIA, un asistente de ciberseguridad RAG. Busca en tus fuentes antes de responder. Si la petición implica acción de infraestructura o provisioning, llama a la tool create_ticket.”
+
+Memoria: usar el vector store por company_id + memoria de sesión (thread).
+
+Tools:
+
+rag_search (conectado al vector store)
+
+splunk_query, palo_alto_status, grafana_fetch (read-only)
+
+create_ticket (REST → /victoria/report en backend)
+
+Endpoint principal:
+
+POST /chat → { companyId, threadId?, message }
+
+Valida agent_access_key o JWT.
+
+Si no hay threadId, crea uno nuevo en Azure Agent Framework.
+
+Devuelve la respuesta generada por SOPHIA (streaming si es posible).
+
+POST /refresh → fuerza reindexación de fuentes de conocimiento.
+
+Conectar la configuración multi-tenant: usar azure_agent_id, vector_store_id, credenciales del Key Vault asociadas a la empresa.
+
+Registrar logs en la tabla audit_logs del backend (via REST).
+
+Documentar endpoints en openapi.yaml.
+
+Estructura recomendada
+
+sophia_service/
+  app.py
+  config.py
+  orchestrator.py      # inicialización del agente y tools
+  tools/
+    rag_search.py
+    splunk.py
+    palo_alto.py
+    grafana.py
+    create_ticket.py   # REST hacia Victoria
+  requirements.txt
+  openapi.yaml
+  basic_frontend/      # opcional para probar el chat
+
+
+Importante
+
+NO crear UI compleja; solo un front mínimo opcional en basic_frontend para probar el chat.
+
+Mantener separación clara: este servicio solo es SOPHIA (no mezclar VICTORIA).
+
+Preparar el código para poder agregar luego agentes adicionales (Victoria u otros).
+
+Asegurarse de que la memoria y los threads se mantengan por usuario y empresa.
+
+Usar el flujo de handoff descrito: cuando la intención es acción → create_ticket.
