@@ -1,0 +1,124 @@
+Contexto
+Ya tengo un backend base en Flask con:
+
+Multi-tenant (empresas y usuarios con roles ADMIN/USER).
+
+Autenticación JWT.
+
+Gestión de integraciones externas (Palo Alto, Splunk, Meraki, Wazuh).
+
+Tickets CRUD y auditoría.
+
+Documentación OpenAPI.
+
+Ahora necesito extender este backend para soportar el Dashboard de seguridad (como en mis mocks), donde se muestra:
+
+Estado de sistemas conectados (Online/Warning/Alert).
+
+Alertas activas y resolución.
+
+Vulnerabilidades y parcheo.
+
+Analíticas: tendencias de incidentes, tiempos de respuesta, distribución de vulnerabilidades.
+
+Además quiero integrar Grafana para poder extraer datos de paneles o métricas que empresas ya tengan ahí y unificarlos en el dashboard.
+
+🔧 Requerimientos técnicos
+
+Ampliar el modelo integrations
+
+Agregar campo type o capabilities (ej. ALERTING, METRICS, VULNERABILITY_FEED).
+
+Permitir un campo config (JSON) para almacenar URLs de APIs, UID de dashboards/paneles, etc.
+
+Mantener keyvault_secret_id para tokens/keys seguros.
+
+Crear módulo providers/grafana.py
+
+Funciones para consumir la API de Grafana con tokens desde Key Vault:
+
+list_dashboards()
+
+fetch_panel_data(dashboard_uid, panel_id, from_ts, to_ts)
+
+Preparar patrón genérico para otros proveedores de métricas si se agregan luego.
+
+Endpoints nuevos para dashboards
+
+GET /systems/status → resumen: online, warning, alert, total.
+
+GET /systems → lista de sistemas conectados con estado y detalles.
+
+GET /alerts/active → alertas recientes (con severidad y origen).
+
+POST /alerts/{id}/resolve → marcar alerta resuelta.
+
+GET /vulnerabilities → listado con estado (open, patching, resolved).
+
+POST /vulnerabilities/{id}/patch → iniciar proceso de parcheo (sin agentes aún).
+
+GET /analytics/incidents → incidentes por severidad últimas 24h.
+
+GET /analytics/response-time → tiempo promedio de respuesta.
+
+GET /analytics/vulnerability-distribution → distribución de CVEs activas.
+
+Normalizador de datos
+
+Cada provider (Palo Alto, Splunk, Grafana…) debe devolver un formato estándar para el front:
+
+{
+  "system": "Palo Alto Firewall",
+  "status": "alert",
+  "alerts": [
+    { "id": "123", "title": "Unusual Traffic Detected", "time": "2025-10-07T12:00:00Z", "severity": "high", "source": "Palo Alto" }
+  ],
+  "metrics": { "uptime": 99.9, "response_time_avg": 15 }
+}
+
+
+El front podrá renderizar sin preocuparse por cada API específica.
+
+(Opcional) Tiempo real
+
+Si es fácil, agrega soporte a WebSocket/Flask-SocketIO para alertas en vivo.
+
+Si no, mantener polling con parámetros ?since=timestamp.
+
+Auditoría
+
+Loggear cada acceso a datos de integraciones y consultas de métricas/alertas.
+
+Documentación
+
+Actualiza el archivo openapi/openapi.yaml para incluir estos nuevos endpoints y modelos de respuesta.
+
+Frontend de prueba
+
+Si necesitas crear una vista mínima para validar endpoints, hazlo simple y déjalo en /basic_frontend.
+
+Nada complejo: solo HTML/JS con fetch para mostrar JSON de los nuevos endpoints.
+
+⚠️ Instrucciones importantes
+
+NO uses Streamlit ni frameworks de dashboards avanzados; manténlo backend puro.
+
+Mantén la estructura modular existente (auth, companies, tickets, integrations, providers, common, openapi).
+
+Implementa los nuevos endpoints como recursos REST claros.
+
+Mantén la autenticación JWT igual que el resto de la app.
+
+Usa Key Vault para leer tokens de Grafana y otros proveedores.
+
+Deja todo preparado para que después SOPHIA y VICTORIA puedan consumir estos endpoints como contexto.
+
+✅ Resultado esperado
+
+Backend Flask extendido con soporte completo para dashboards, alertas, vulnerabilidades y métricas.
+
+Integración funcional con Grafana (providers/grafana.py) para traer datos de paneles o métricas.
+
+OpenAPI actualizado con todos los endpoints nuevos.
+
+(Opcional) Front mínimo para testear las nuevas rutas.

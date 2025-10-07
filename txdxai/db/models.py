@@ -91,6 +91,9 @@ class Integration(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id', ondelete='CASCADE'), nullable=False)
     provider = db.Column(db.String(100), nullable=False)
+    type = db.Column(db.String(50), nullable=True)
+    capabilities = db.Column(db.JSON, nullable=True)
+    config = db.Column(db.JSON, nullable=True)
     keyvault_secret_id = db.Column(db.String(500), nullable=False)
     extra_json = db.Column(db.JSON, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -100,6 +103,9 @@ class Integration(db.Model):
             'id': self.id,
             'company_id': self.company_id,
             'provider': self.provider,
+            'type': self.type,
+            'capabilities': self.capabilities,
+            'config': self.config,
             'keyvault_secret_id': self.keyvault_secret_id,
             'extra_json': self.extra_json,
             'created_at': self.created_at.isoformat() if self.created_at else None
@@ -169,5 +175,102 @@ class AuditLog(db.Model):
             'entity_type': self.entity_type,
             'entity_id': self.entity_id,
             'payload': self.payload,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class System(db.Model):
+    __tablename__ = 'systems'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id', ondelete='CASCADE'), nullable=False)
+    integration_id = db.Column(db.Integer, db.ForeignKey('integrations.id', ondelete='CASCADE'), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='online')
+    details = db.Column(db.JSON, nullable=True)
+    last_check = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'company_id': self.company_id,
+            'integration_id': self.integration_id,
+            'name': self.name,
+            'status': self.status,
+            'details': self.details,
+            'last_check': self.last_check.isoformat() if self.last_check else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class Alert(db.Model):
+    __tablename__ = 'alerts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id', ondelete='CASCADE'), nullable=False)
+    integration_id = db.Column(db.Integer, db.ForeignKey('integrations.id', ondelete='CASCADE'), nullable=True)
+    external_id = db.Column(db.String(255), nullable=True)
+    title = db.Column(db.String(500), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    severity = db.Column(db.String(20), nullable=False)
+    source = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='active')
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    resolved_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    meta_info = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'company_id': self.company_id,
+            'integration_id': self.integration_id,
+            'external_id': self.external_id,
+            'title': self.title,
+            'description': self.description,
+            'severity': self.severity,
+            'source': self.source,
+            'status': self.status,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
+            'resolved_by_user_id': self.resolved_by_user_id,
+            'meta_info': self.meta_info,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class Vulnerability(db.Model):
+    __tablename__ = 'vulnerabilities'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id', ondelete='CASCADE'), nullable=False)
+    integration_id = db.Column(db.Integer, db.ForeignKey('integrations.id', ondelete='CASCADE'), nullable=True)
+    cve_id = db.Column(db.String(50), nullable=True)
+    title = db.Column(db.String(500), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    severity = db.Column(db.String(20), nullable=False)
+    cvss_score = db.Column(db.Float, nullable=True)
+    affected_systems = db.Column(db.JSON, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='open')
+    patch_status = db.Column(db.String(50), nullable=True)
+    patched_at = db.Column(db.DateTime, nullable=True)
+    meta_info = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'company_id': self.company_id,
+            'integration_id': self.integration_id,
+            'cve_id': self.cve_id,
+            'title': self.title,
+            'description': self.description,
+            'severity': self.severity,
+            'cvss_score': self.cvss_score,
+            'affected_systems': self.affected_systems,
+            'status': self.status,
+            'patch_status': self.patch_status,
+            'patched_at': self.patched_at.isoformat() if self.patched_at else None,
+            'meta_info': self.meta_info,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

@@ -54,12 +54,20 @@ def create_app(config_class=Config):
     from txdxai.users import users_bp
     from txdxai.tickets import tickets_bp
     from txdxai.integrations import integrations_bp
+    from txdxai.systems import systems_bp
+    from txdxai.alerts import alerts_bp
+    from txdxai.vulnerabilities import vulnerabilities_bp
+    from txdxai.analytics import analytics_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(companies_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(tickets_bp)
     app.register_blueprint(integrations_bp)
+    app.register_blueprint(systems_bp)
+    app.register_blueprint(alerts_bp)
+    app.register_blueprint(vulnerabilities_bp)
+    app.register_blueprint(analytics_bp)
     
     app.register_error_handler(TxDxAIError, handle_error)
     app.register_error_handler(Exception, handle_error)
