@@ -27,7 +27,7 @@ Preferred communication style: Simple, everyday language.
 - **Database**: PostgreSQL (Azure Database for PostgreSQL).
 - **ORM**: SQLAlchemy with Flask-SQLAlchemy.
 - **Migration Management**: Alembic via Flask-Migrate.
-- **Models**: `Company`, `User`, `Ticket`, `Integration`, `System`, `Alert`, `Vulnerability`, `AgentSession`, `AgentMemoryRef`, `AuditLog`.
+- **Models**: `Company`, `User`, `Ticket`, `Integration`, `System`, `Alert`, `Vulnerability`, `AgentInstance`, `AgentSession`, `AgentMemoryRef`, `AuditLog`.
 
 ### Secret Management
 - **Service**: Azure Key Vault for all sensitive credentials.
@@ -39,6 +39,22 @@ Preferred communication style: Simple, everyday language.
 - **Providers**: Palo Alto, Splunk, Wazuh, Meraki, Grafana.
 - **Pattern**: Each provider implements `execute_<provider>_action(credentials, action, params)`.
 - **Data Normalization**: `common/normalizer.py` standardizes multi-provider responses.
+
+### SOPHIA AI Agent System
+- **Purpose**: Multi-tenant AI agent provisioning for automation and security workflows.
+- **Architecture**: Company-level agent instances with secure access key authentication.
+- **Agent Model**: `AgentInstance` stores Azure AI project configuration and access credentials.
+- **Access Control**: 
+  - ADMIN-only CRUD operations via `/admin/agent-instances` endpoints.
+  - Client apps authenticate via `/agents/auth/token` using company ID and access key.
+- **Security Pattern**:
+  - Access keys generated using `secrets.token_urlsafe(32)` for strong entropy.
+  - Keys hashed with bcrypt (cost factor 12) before storage; plain text never persisted.
+  - Service JWT tokens issued with `agent:invoke` scope for authenticated clients.
+- **Key Rotation**: Administrators can rotate access keys via `/admin/agent-instances/{id}/rotate-key`.
+- **Azure Integration**: Stores Azure AI project ID, agent ID, and vector store ID for each instance.
+- **Status Management**: Instances can be ACTIVE, DISABLED, or TO_PROVISION.
+- **Audit Trail**: All agent authentication and management actions logged to `AuditLog`.
 
 ### Error Handling
 - **Custom Exception Hierarchy**: `TxDxAIError` base class with specialized exceptions.
