@@ -183,6 +183,35 @@ components:
           type: string
           format: date-time
     
+    AgentInstance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        company_id:
+          type: integer
+        agent_type:
+          type: string
+          enum: [SOPHIA]
+        azure_project_id:
+          type: string
+        azure_agent_id:
+          type: string
+        azure_vector_store_id:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, DISABLED, TO_PROVISION]
+        settings:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+    
     Error:
       type: object
       properties:
@@ -1025,3 +1054,202 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
+  
+  /admin/agent-instances:
+    post:
+      tags:
+        - Agent Instances (SOPHIA)
+      summary: Create agent instance (ADMIN only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                companyId:
+                  type: integer
+                agentType:
+                  type: string
+                  default: SOPHIA
+                region:
+                  type: string
+                model:
+                  type: string
+                azureProjectId:
+                  type: string
+      responses:
+        '201':
+          description: Agent instance created (returns access key only once)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  agent_instance:
+                    $ref: '#/components/schemas/AgentInstance'
+                  agent_access_key:
+                    type: string
+    
+    get:
+      tags:
+        - Agent Instances (SOPHIA)
+      summary: Get all agent instances (ADMIN only)
+      responses:
+        '200':
+          description: List of agent instances
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agent_instances:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AgentInstance'
+  
+  /admin/agent-instances/{instance_id}:
+    get:
+      tags:
+        - Agent Instances (SOPHIA)
+      summary: Get agent instance by ID (ADMIN only)
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agent instance details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentInstance'
+    
+    patch:
+      tags:
+        - Agent Instances (SOPHIA)
+      summary: Update agent instance (ADMIN only)
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [ACTIVE, DISABLED]
+                settings:
+                  type: object
+                azureProjectId:
+                  type: string
+                azureAgentId:
+                  type: string
+                azureVectorStoreId:
+                  type: string
+      responses:
+        '200':
+          description: Agent instance updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  agent_instance:
+                    $ref: '#/components/schemas/AgentInstance'
+    
+    delete:
+      tags:
+        - Agent Instances (SOPHIA)
+      summary: Disable agent instance (ADMIN only)
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agent instance disabled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  
+  /admin/agent-instances/{instance_id}/rotate-key:
+    post:
+      tags:
+        - Agent Instances (SOPHIA)
+      summary: Rotate agent access key (ADMIN only, returns new key only once)
+      parameters:
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Access key rotated (returns new key only once)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  agent_access_key:
+                    type: string
+  
+  /agents/auth/token:
+    post:
+      tags:
+        - Agent Authentication
+      summary: Authenticate client app and get service JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - companyId
+                - agentAccessKey
+              properties:
+                companyId:
+                  type: integer
+                agentType:
+                  type: string
+                  default: SOPHIA
+                agentAccessKey:
+                  type: string
+      responses:
+        '200':
+          description: Service JWT token for agent access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+                  agent_instance_id:
+                    type: string
