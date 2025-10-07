@@ -76,10 +76,108 @@ components:
           type: integer
         provider:
           type: string
-          enum: [palo_alto, splunk, wazuh, meraki]
+          enum: [palo_alto, splunk, wazuh, meraki, grafana]
+        type:
+          type: string
+        capabilities:
+          type: array
+          items:
+            type: string
+        config:
+          type: object
         keyvault_secret_id:
           type: string
         extra_json:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+    
+    System:
+      type: object
+      properties:
+        id:
+          type: integer
+        company_id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+          enum: [online, offline, degraded, unknown]
+        health_score:
+          type: number
+        last_check:
+          type: string
+          format: date-time
+        meta_info:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+    
+    Alert:
+      type: object
+      properties:
+        id:
+          type: integer
+        company_id:
+          type: integer
+        system_id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        status:
+          type: string
+          enum: [active, resolved, acknowledged]
+        source_provider:
+          type: string
+        meta_info:
+          type: object
+        resolved_at:
+          type: string
+          format: date-time
+        resolved_by_user_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    
+    Vulnerability:
+      type: object
+      properties:
+        id:
+          type: integer
+        company_id:
+          type: integer
+        system_id:
+          type: integer
+        cve_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        cvss_score:
+          type: number
+        status:
+          type: string
+          enum: [open, patching, resolved]
+        patch_status:
+          type: string
+        source_provider:
+          type: string
+        meta_info:
           type: object
         created_at:
           type: string
@@ -656,3 +754,274 @@ paths:
                 properties:
                   credentials:
                     type: object
+  
+  /systems:
+    get:
+      tags:
+        - Systems
+      summary: Get all systems
+      responses:
+        '200':
+          description: List of systems
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  systems:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/System'
+  
+  /systems/status:
+    get:
+      tags:
+        - Systems
+      summary: Get system status overview
+      responses:
+        '200':
+          description: System status overview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_systems:
+                    type: integer
+                  online:
+                    type: integer
+                  offline:
+                    type: integer
+                  degraded:
+                    type: integer
+                  average_health_score:
+                    type: number
+  
+  /alerts/active:
+    get:
+      tags:
+        - Alerts
+      summary: Get active alerts
+      parameters:
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: List of active alerts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alerts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Alert'
+  
+  /alerts/{alert_id}/resolve:
+    post:
+      tags:
+        - Alerts
+      summary: Resolve an alert
+      parameters:
+        - name: alert_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Alert resolved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  alert:
+                    $ref: '#/components/schemas/Alert'
+  
+  /vulnerabilities:
+    get:
+      tags:
+        - Vulnerabilities
+      summary: Get all vulnerabilities
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, patching, resolved]
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, high, medium, low]
+      responses:
+        '200':
+          description: List of vulnerabilities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vulnerabilities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Vulnerability'
+  
+  /vulnerabilities/{vuln_id}:
+    get:
+      tags:
+        - Vulnerabilities
+      summary: Get vulnerability by ID
+      parameters:
+        - name: vuln_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Vulnerability details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vulnerability'
+  
+  /vulnerabilities/{vuln_id}/patch:
+    post:
+      tags:
+        - Vulnerabilities
+      summary: Initiate patch process for vulnerability
+      parameters:
+        - name: vuln_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Patch process initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  vulnerability:
+                    $ref: '#/components/schemas/Vulnerability'
+  
+  /analytics/incidents:
+    get:
+      tags:
+        - Analytics
+      summary: Get incident analytics
+      parameters:
+        - name: hours
+          in: query
+          schema:
+            type: integer
+            default: 24
+      responses:
+        '200':
+          description: Incident analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period_hours:
+                    type: integer
+                  total_incidents:
+                    type: integer
+                  by_severity:
+                    type: object
+                  timestamp:
+                    type: string
+                    format: date-time
+  
+  /analytics/response-time:
+    get:
+      tags:
+        - Analytics
+      summary: Get response time analytics
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 7
+      responses:
+        '200':
+          description: Response time analytics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period_days:
+                    type: integer
+                  average_response_time_minutes:
+                    type: number
+                  total_resolved_alerts:
+                    type: integer
+                  timestamp:
+                    type: string
+                    format: date-time
+  
+  /analytics/vulnerability-distribution:
+    get:
+      tags:
+        - Analytics
+      summary: Get vulnerability distribution analytics
+      responses:
+        '200':
+          description: Vulnerability distribution
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_active_vulnerabilities:
+                    type: integer
+                  by_severity:
+                    type: object
+                  by_cvss_range:
+                    type: object
+                  timestamp:
+                    type: string
+                    format: date-time
+  
+  /analytics/summary:
+    get:
+      tags:
+        - Analytics
+      summary: Get analytics summary
+      responses:
+        '200':
+          description: Analytics summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active_alerts:
+                    type: integer
+                  open_vulnerabilities:
+                    type: integer
+                  pending_tickets:
+                    type: integer
+                  timestamp:
+                    type: string
+                    format: date-time
