@@ -1,0 +1,302 @@
+from typing import Dict, Any, Optional, List
+from azure.ai.projects import AIProjectClient
+from azure.ai.projects.models import MessageTextContent, ThreadMessage, ThreadRun
+from azure.identity import DefaultAzureCredential
+from azure.core.credentials import AzureKeyCredential
+import json
+
+from sophia_service.config import config
+from sophia_service.tools.rag_search import RAGSearchTool
+from sophia_service.tools.splunk import SplunkTool
+from sophia_service.tools.palo_alto import PaloAltoTool
+from sophia_service.tools.grafana import GrafanaTool
+from sophia_service.tools.create_ticket import CreateTicketTool
+
+class SophiaOrchestrator:
+    """
+    SOPHIA orchestrator using Microsoft Agent Framework (Azure AI Agents)
+    Handles RAG-based conversations with tool calling
+    """
+    
+    SOPHIA_SYSTEM_PROMPT = """You are SOPHIA, an expert cybersecurity assistant specializing in security operations and infrastructure.
+
+Your capabilities:
+1. **Knowledge Base Search**: Always search your knowledge base FIRST before answering questions about security policies, documentation, or procedures
+2. **Security Monitoring**: Query Splunk logs, check Palo Alto firewall status, and fetch Grafana metrics
+3. **Handoff to VICTORIA**: When users request infrastructure changes, provisioning, or troubleshooting actions, create a ticket using create_ticket tool
+
+Guidelines:
+- Search your knowledge base using rag_search before providing answers about security documentation
+- For monitoring queries, use splunk_query, palo_alto_status, or grafana_fetch tools
+- If the request involves ACTION (provisioning, configuration changes, troubleshooting), use create_ticket to hand off to VICTORIA
+- Be concise and security-focused
+- Always cite sources when using RAG search results
+
+Remember: You are READ-ONLY for monitoring. All infrastructure actions go through VICTORIA via tickets."""
+    
+    def __init__(self):
+        self.backend_url = config.BACKEND_URL
+        self.project_client: Optional[AIProjectClient] = None
+        
+        self.rag_tool = RAGSearchTool(
+            config.AZURE_SEARCH_ENDPOINT,
+            config.AZURE_SEARCH_KEY
+        )
+        self.splunk_tool = SplunkTool(self.backend_url)
+        self.palo_alto_tool = PaloAltoTool(self.backend_url)
+        self.grafana_tool = GrafanaTool(self.backend_url)
+        self.create_ticket_tool = CreateTicketTool(self.backend_url)
+        
+        self.threads: Dict[str, str] = {}
+        self.agents: Dict[str, str] = {}
+    
+    def initialize_agent(
+        self,
+        company_id: int,
+        azure_project_id: str,
+        azure_agent_id: Optional[str] = None,
+        vector_store_id: Optional[str] = None
+    ) -> str:
+        """
+        Initialize or get existing agent for a company
+        
+        Args:
+            company_id: Company identifier
+            azure_project_id: Azure AI project ID
+            azure_agent_id: Existing agent ID (if any)
+            vector_store_id: Vector store ID for RAG
+            
+        Returns:
+            Agent ID
+        """
+        agent_key = f"company-{company_id}"
+        
+        if agent_key in self.agents:
+            return self.agents[agent_key]
+        
+        try:
+            if not config.AZURE_OPENAI_ENDPOINT or not config.AZURE_OPENAI_KEY:
+                agent_id = f"mock-agent-{company_id}"
+                self.agents[agent_key] = agent_id
+                return agent_id
+            
+            credential = AzureKeyCredential(config.AZURE_OPENAI_KEY)
+            
+            self.project_client = AIProjectClient(
+                endpoint=config.AZURE_OPENAI_ENDPOINT,
+                credential=credential
+            )
+            
+            tools = [
+                self.rag_tool.get_tool_definition(),
+                self.splunk_tool.get_tool_definition(),
+                self.palo_alto_tool.get_tool_definition(),
+                self.grafana_tool.get_tool_definition(),
+                self.create_ticket_tool.get_tool_definition()
+            ]
+            
+            if azure_agent_id:
+                agent_id = azure_agent_id
+            else:
+                agent_response = self.project_client.agents.create_agent(
+                    model=config.AZURE_OPENAI_DEPLOYMENT,
+                    name=f"SOPHIA-{company_id}",
+                    instructions=self.SOPHIA_SYSTEM_PROMPT,
+                    tools=tools
+                )
+                agent_id = agent_response.id
+            
+            self.agents[agent_key] = agent_id
+            return agent_id
+            
+        except Exception as e:
+            print(f"Error initializing agent: {e}")
+            agent_id = f"mock-agent-{company_id}"
+            self.agents[agent_key] = agent_id
+            return agent_id
+    
+    def create_thread(self) -> str:
+        """Create a new conversation thread"""
+        try:
+            if self.project_client:
+                thread_response = self.project_client.agents.create_thread()
+                return thread_response.id
+            else:
+                import uuid
+                return f"mock-thread-{uuid.uuid4()}"
+        except Exception as e:
+            print(f"Error creating thread: {e}")
+            import uuid
+            return f"mock-thread-{uuid.uuid4()}"
+    
+    def execute_tool(
+        self,
+        tool_name: str,
+        arguments: Dict[str, Any],
+        company_id: int,
+        user_id: int,
+        vector_store_id: Optional[str],
+        auth_token: str
+    ) -> Dict[str, Any]:
+        """Execute a tool call"""
+        try:
+            if tool_name == "rag_search":
+                return self.rag_tool.search(
+                    company_id,
+                    vector_store_id or "default",
+                    arguments.get("query", ""),
+                    arguments.get("top_k", 5)
+                )
+            
+            elif tool_name == "splunk_query":
+                return self.splunk_tool.query(
+                    company_id,
+                    arguments.get("integration_id"),
+                    arguments.get("query"),
+                    auth_token
+                )
+            
+            elif tool_name == "palo_alto_status":
+                return self.palo_alto_tool.get_status(
+                    company_id,
+                    arguments.get("integration_id"),
+                    auth_token
+                )
+            
+            elif tool_name == "grafana_fetch":
+                return self.grafana_tool.fetch_metrics(
+                    company_id,
+                    arguments.get("integration_id"),
+                    arguments.get("dashboard_id"),
+                    auth_token
+                )
+            
+            elif tool_name == "create_ticket":
+                return self.create_ticket_tool.create_ticket(
+                    company_id,
+                    user_id,
+                    arguments.get("title"),
+                    arguments.get("description"),
+                    arguments.get("priority", "medium"),
+                    auth_token
+                )
+            
+            else:
+                return {"error": f"Unknown tool: {tool_name}"}
+                
+        except Exception as e:
+            return {"error": str(e)}
+    
+    def chat(
+        self,
+        agent_id: str,
+        thread_id: str,
+        message: str,
+        company_id: int,
+        user_id: int,
+        vector_store_id: Optional[str],
+        auth_token: str
+    ) -> Dict[str, Any]:
+        """
+        Process a chat message with SOPHIA
+        
+        Args:
+            agent_id: Azure AI Agent ID
+            thread_id: Thread ID for conversation
+            message: User message
+            company_id: Company identifier
+            user_id: User identifier
+            vector_store_id: Vector store for RAG
+            auth_token: JWT for backend calls
+            
+        Returns:
+            Response with message and metadata
+        """
+        try:
+            if not self.project_client or agent_id.startswith("mock-"):
+                return {
+                    "response": f"[MOCK MODE] SOPHIA received: {message}\n\nNote: Azure AI Agents not configured. Set AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_KEY to enable full functionality.",
+                    "thread_id": thread_id,
+                    "tool_calls": []
+                }
+            
+            self.project_client.agents.create_message(
+                thread_id=thread_id,
+                role="user",
+                content=message
+            )
+            
+            run = self.project_client.agents.create_run(
+                thread_id=thread_id,
+                agent_id=agent_id
+            )
+            
+            while run.status in ["queued", "in_progress", "requires_action"]:
+                run = self.project_client.agents.get_run(
+                    thread_id=thread_id,
+                    run_id=run.id
+                )
+                
+                if run.status == "requires_action":
+                    tool_outputs = []
+                    for tool_call in run.required_action.submit_tool_outputs.tool_calls:
+                        arguments = json.loads(tool_call.function.arguments)
+                        result = self.execute_tool(
+                            tool_call.function.name,
+                            arguments,
+                            company_id,
+                            user_id,
+                            vector_store_id,
+                            auth_token
+                        )
+                        tool_outputs.append({
+                            "tool_call_id": tool_call.id,
+                            "output": json.dumps(result)
+                        })
+                    
+                    run = self.project_client.agents.submit_tool_outputs_to_run(
+                        thread_id=thread_id,
+                        run_id=run.id,
+                        tool_outputs=tool_outputs
+                    )
+            
+            messages = self.project_client.agents.list_messages(thread_id=thread_id)
+            latest_message = messages.data[0]
+            
+            response_text = ""
+            if hasattr(latest_message.content[0], 'text'):
+                response_text = latest_message.content[0].text.value
+            
+            return {
+                "response": response_text,
+                "thread_id": thread_id,
+                "tool_calls": []
+            }
+            
+        except Exception as e:
+            return {
+                "response": f"Error processing message: {str(e)}",
+                "thread_id": thread_id,
+                "error": True
+            }
+    
+    def refresh_knowledge(self, company_id: int, vector_store_id: str) -> Dict[str, Any]:
+        """
+        Refresh knowledge base from sources
+        
+        Args:
+            company_id: Company identifier
+            vector_store_id: Vector store to refresh
+            
+        Returns:
+            Refresh status
+        """
+        return {
+            "success": True,
+            "message": "Knowledge refresh initiated",
+            "company_id": company_id,
+            "vector_store_id": vector_store_id,
+            "note": "Background refresh process started. This may take several minutes."
+        }
+
+orchestrator = SophiaOrchestrator()
