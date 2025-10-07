@@ -66,5 +66,38 @@ def authenticate_agent():
         'access_token': service_token,
         'token_type': 'Bearer',
         'expires_in': 3600,
-        'agent_instance_id': instance.id
+        'agent_instance_id': instance.id,
+        'agent_instance': {
+            'id': instance.id,
+            'company_id': instance.company_id,
+            'agent_type': instance.agent_type,
+            'azure_project_id': instance.azure_project_id,
+            'azure_agent_id': instance.azure_agent_id,
+            'azure_vector_store_id': instance.azure_vector_store_id,
+            'status': instance.status,
+            'settings': instance.settings
+        }
+    }), 200
+
+
+@agents_bp.route('/instance/<instance_id>', methods=['GET'])
+def get_agent_instance_metadata(instance_id):
+    """
+    Public endpoint for agent services to fetch instance metadata.
+    No authentication required as this is protected by instance_id knowledge.
+    """
+    instance = AgentInstance.query.get(instance_id)
+    
+    if not instance:
+        raise UnauthorizedError('Invalid instance')
+    
+    return jsonify({
+        'id': instance.id,
+        'company_id': instance.company_id,
+        'agent_type': instance.agent_type,
+        'azure_project_id': instance.azure_project_id,
+        'azure_agent_id': instance.azure_agent_id,
+        'azure_vector_store_id': instance.azure_vector_store_id,
+        'status': instance.status,
+        'settings': instance.settings
     }), 200

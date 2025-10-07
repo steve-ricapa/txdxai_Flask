@@ -34,7 +34,7 @@ def validate_agent_access(company_id: int, agent_access_key: str) -> Optional[Di
         agent_access_key: Agent access key
         
     Returns:
-        Agent instance data or None if invalid
+        Agent auth data including instance details, or None if invalid
     """
     try:
         response = requests.post(
@@ -51,7 +51,8 @@ def validate_agent_access(company_id: int, agent_access_key: str) -> Optional[Di
             data = response.json()
             return {
                 'access_token': data.get('access_token'),
-                'agent_instance_id': data.get('agent_instance_id')
+                'agent_instance_id': data.get('agent_instance_id'),
+                'agent_instance': data.get('agent_instance', {})
             }
         return None
     except Exception as e:
@@ -59,21 +60,20 @@ def validate_agent_access(company_id: int, agent_access_key: str) -> Optional[Di
         return None
 
 
-def get_agent_instance(agent_instance_id: str, auth_token: str) -> Optional[Dict[str, Any]]:
+def get_agent_instance(agent_instance_id: str) -> Optional[Dict[str, Any]]:
     """
-    Get agent instance details from backend
+    Get agent instance details from backend (fallback for legacy backends)
     
     Args:
         agent_instance_id: Agent instance ID
-        auth_token: JWT token
         
     Returns:
         Agent instance data or None
     """
     try:
+        # Use public metadata endpoint that doesn't require auth
         response = requests.get(
-            f"{config.BACKEND_URL}/admin/agent-instances/{agent_instance_id}",
-            headers={'Authorization': f'Bearer {auth_token}'},
+            f"{config.BACKEND_URL}/agents/instance/{agent_instance_id}",
             timeout=10
         )
         
@@ -139,10 +139,17 @@ def chat():
     
     auth_token = auth_data['access_token']
     agent_instance_id = auth_data['agent_instance_id']
+    agent_instance = auth_data.get('agent_instance', {})
     
-    agent_instance = get_agent_instance(agent_instance_id, auth_token)
+    # Fallback: if agent_instance data is missing, fetch from dedicated endpoint
+    # This provides backward compatibility with older backends
     if not agent_instance:
-        return jsonify({'error': 'Agent instance not found'}), 404
+        agent_instance = get_agent_instance(agent_instance_id)
+        if not agent_instance:
+            # Unable to fetch - return error
+            return jsonify({
+                'error': 'Agent instance metadata unavailable - backend may need upgrade'
+            }), 502
     
     azure_project_id = agent_instance.get('azure_project_id')
     azure_agent_id = agent_instance.get('azure_agent_id')
@@ -212,10 +219,17 @@ def refresh():
     
     auth_token = auth_data['access_token']
     agent_instance_id = auth_data['agent_instance_id']
+    agent_instance = auth_data.get('agent_instance', {})
     
-    agent_instance = get_agent_instance(agent_instance_id, auth_token)
+    # Fallback: if agent_instance data is missing, fetch from dedicated endpoint
+    # This provides backward compatibility with older backends
     if not agent_instance:
-        return jsonify({'error': 'Agent instance not found'}), 404
+        agent_instance = get_agent_instance(agent_instance_id)
+        if not agent_instance:
+            # Unable to fetch - return error
+            return jsonify({
+                'error': 'Agent instance metadata unavailable - backend may need upgrade'
+            }), 502
     
     vector_store_id = agent_instance.get('azure_vector_store_id', 'default')
     
