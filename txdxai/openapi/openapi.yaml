@@ -1,0 +1,658 @@
+openapi: 3.0.0
+info:
+  title: TxDxAI API
+  description: Multi-tenant Cybersecurity and Ticket Automation API
+  version: 1.0.0
+servers:
+  - url: /api
+    description: API base path
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    Company:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        company_id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [ADMIN, USER]
+        created_at:
+          type: string
+          format: date-time
+    
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: integer
+        company_id:
+          type: integer
+        created_by_user_id:
+          type: integer
+        subject:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, EXECUTED, FAILED, DERIVED]
+        executed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+    
+    Integration:
+      type: object
+      properties:
+        id:
+          type: integer
+        company_id:
+          type: integer
+        provider:
+          type: string
+          enum: [palo_alto, splunk, wazuh, meraki]
+        keyvault_secret_id:
+          type: string
+        extra_json:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+    
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+security:
+  - BearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new ADMIN user and company
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - company_name
+                - username
+                - email
+                - password
+              properties:
+                company_name:
+                  type: string
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+  
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login with username and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+  
+  /companies:
+    get:
+      tags:
+        - Companies
+      summary: Get user's company
+      responses:
+        '200':
+          description: List of companies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  companies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Company'
+  
+  /companies/{company_id}:
+    get:
+      tags:
+        - Companies
+      summary: Get company by ID
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Company details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+    
+    put:
+      tags:
+        - Companies
+      summary: Update company (ADMIN only)
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Company updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  company:
+                    $ref: '#/components/schemas/Company'
+  
+  /users:
+    get:
+      tags:
+        - Users
+      summary: Get all users in company
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+    
+    post:
+      tags:
+        - Users
+      summary: Create a new user (ADMIN only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [ADMIN, USER]
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+  
+  /users/{user_id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    
+    put:
+      tags:
+        - Users
+      summary: Update user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [ADMIN, USER]
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+    
+    delete:
+      tags:
+        - Users
+      summary: Delete user (ADMIN only)
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  
+  /tickets:
+    get:
+      tags:
+        - Tickets
+      summary: Get all tickets
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, EXECUTED, FAILED, DERIVED]
+      responses:
+        '200':
+          description: List of tickets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tickets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Ticket'
+    
+    post:
+      tags:
+        - Tickets
+      summary: Create a new ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - subject
+              properties:
+                subject:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Ticket created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  ticket:
+                    $ref: '#/components/schemas/Ticket'
+  
+  /tickets/{ticket_id}:
+    get:
+      tags:
+        - Tickets
+      summary: Get ticket by ID
+      parameters:
+        - name: ticket_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Ticket details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+    
+    put:
+      tags:
+        - Tickets
+      summary: Update ticket
+      parameters:
+        - name: ticket_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subject:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [PENDING, EXECUTED, FAILED, DERIVED]
+      responses:
+        '200':
+          description: Ticket updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  ticket:
+                    $ref: '#/components/schemas/Ticket'
+    
+    delete:
+      tags:
+        - Tickets
+      summary: Delete ticket
+      parameters:
+        - name: ticket_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Ticket deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  
+  /integrations:
+    get:
+      tags:
+        - Integrations
+      summary: Get all integrations
+      responses:
+        '200':
+          description: List of integrations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  integrations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Integration'
+    
+    post:
+      tags:
+        - Integrations
+      summary: Create a new integration (ADMIN only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - provider
+                - credentials
+              properties:
+                provider:
+                  type: string
+                  enum: [palo_alto, splunk, wazuh, meraki]
+                name:
+                  type: string
+                credentials:
+                  type: object
+                extra_json:
+                  type: object
+      responses:
+        '201':
+          description: Integration created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  integration:
+                    $ref: '#/components/schemas/Integration'
+  
+  /integrations/{integration_id}:
+    get:
+      tags:
+        - Integrations
+      summary: Get integration by ID
+      parameters:
+        - name: integration_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Integration details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Integration'
+    
+    put:
+      tags:
+        - Integrations
+      summary: Update integration (ADMIN only)
+      parameters:
+        - name: integration_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credentials:
+                  type: object
+                extra_json:
+                  type: object
+      responses:
+        '200':
+          description: Integration updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  integration:
+                    $ref: '#/components/schemas/Integration'
+    
+    delete:
+      tags:
+        - Integrations
+      summary: Delete integration (ADMIN only)
+      parameters:
+        - name: integration_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Integration deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  
+  /integrations/{integration_id}/credentials:
+    get:
+      tags:
+        - Integrations
+      summary: Get integration credentials from Key Vault (ADMIN only)
+      parameters:
+        - name: integration_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Integration credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credentials:
+                    type: object
