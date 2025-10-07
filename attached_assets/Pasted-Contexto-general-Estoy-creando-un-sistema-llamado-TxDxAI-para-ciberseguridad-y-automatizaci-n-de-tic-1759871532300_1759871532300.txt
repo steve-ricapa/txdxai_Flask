@@ -1,0 +1,90 @@
+Contexto general
+Estoy creando un sistema llamado TxDxAI para ciberseguridad y automatización de tickets.
+Antes usaba Spring Boot, pero ahora quiero migrar todo a Flask y desplegarlo en Azure.
+La app será multi-tenant: cada empresa tiene un ADMIN que gestiona usuarios y credenciales, y usuarios estándar (USER) que solo consumen servicios.
+Los secretos (API keys, credenciales de integraciones) deben almacenarse en Azure Key Vault y no en la base de datos.
+La base de datos será PostgreSQL (Azure Database for PostgreSQL).
+Toda la API debe documentarse en OpenAPI (openapi.yaml) para luego importarla en VibeCode Workspace y generar la web y la app móvil.
+
+Requerimientos clave del backend
+
+Autenticación con JWT (ADMIN y USER), usando Flask-JWT-Extended.
+
+CRUD de empresas y usuarios:
+
+Un ADMIN puede crear usuarios de su empresa.
+
+Un ADMIN inicial se registra con /auth/register.
+
+CRUD de tickets con estados PENDING | EXECUTED | FAILED | DERIVED.
+
+Gestión de integraciones con proveedores externos (Palo Alto, Splunk, Wazuh, Meraki, etc.).
+
+Cada registro de integración guarda un provider, metadatos y un puntero al secreto en Key Vault.
+
+Auditoría y logs de cambios relevantes (tickets, integraciones, ejecución de agentes).
+
+Arquitectura limpia y modular para Flask, con SQLAlchemy + Alembic para migraciones.
+
+Exponer todos los endpoints en un archivo openapi/openapi.yaml.
+
+NO generar una interfaz gráfica compleja; si quieres crear un front mínimo solo para probar endpoints, ponlo en una carpeta aparte (/basic_frontend).
+
+Modelo de datos recomendado
+
+companies: id, name, created_at
+
+users: id, company_id, username, email, password_hash, role, created_at
+
+tickets: id, company_id, created_by_user_id, subject, description, status, executed_at, created_at
+
+integrations: id, company_id, provider, keyvault_secret_id, extra_json, created_at
+
+agent_sessions: id, company_id, user_id, external_thread_id, purpose, created_at, last_activity_at
+
+agent_memory_refs: id, session_id, vector_store_id, scope, created_at
+
+audit_logs: id, actor_user_id, action, entity_type, entity_id, payload, created_at
+
+Estructura deseada del proyecto
+
+txdxai/
+  app.py
+  config.py
+  extensions/          # SQLAlchemy, JWT, OTel
+  auth/
+  companies/
+  users/
+  tickets/
+  integrations/
+  providers/           # splunk.py, palo_alto.py, wazuh.py, meraki.py
+  agents/              # (este módulo solo define abstracciones base)
+  db/
+    models.py
+    migrations/
+  common/
+    errors.py, utils.py
+  openapi/
+    openapi.yaml
+basic_frontend/        # opcional, solo pruebas de endpoints
+requirements.txt
+Dockerfile (opcional)
+
+
+Instrucciones para Replit
+
+Crea la estructura y el código base del backend Flask con los endpoints definidos.
+
+Configura JWT, roles y autenticación multi-tenant.
+
+Integra lectura de secretos desde Azure Key Vault.
+
+Implementa persistencia en PostgreSQL y prepara migraciones con Alembic.
+
+Genera un archivo openapi/openapi.yaml que describa todos los endpoints.
+
+Si necesitas un front de prueba, hazlo muy simple y colócalo en /basic_frontend (solo para probar los endpoints, nada elaborado).
+
+No generes UI compleja.
+
+No mezcles la lógica de agentes aún; deja solo un módulo base vacío (/agents/) para luego conectarlo con la segunda parte del prompt.
