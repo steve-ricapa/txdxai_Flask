@@ -1,0 +1,208 @@
+openapi: 3.0.0
+info:
+  title: SOPHIA AI Agent Service API
+  description: RAG-based cybersecurity assistant with Microsoft Agent Framework
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  service:
+                    type: string
+                  version:
+                    type: string
+                  azure_ai_configured:
+                    type: boolean
+
+  /chat:
+    post:
+      tags:
+        - SOPHIA
+      summary: Chat with SOPHIA agent
+      description: Send a message to SOPHIA and get a response with optional tool calls
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - companyId
+                - userId
+                - message
+                - agentAccessKey
+              properties:
+                companyId:
+                  type: integer
+                  description: Company identifier
+                userId:
+                  type: integer
+                  description: User identifier
+                message:
+                  type: string
+                  description: User message to SOPHIA
+                threadId:
+                  type: string
+                  description: Thread ID for conversation continuity (optional, will create new if not provided)
+                agentAccessKey:
+                  type: string
+                  description: Agent access key for authentication
+      responses:
+        '200':
+          description: SOPHIA response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                    description: SOPHIA's text response
+                  threadId:
+                    type: string
+                    description: Thread ID for this conversation
+                  agentId:
+                    type: string
+                    description: Azure AI Agent ID
+                  toolCalls:
+                    type: array
+                    description: List of tools called during this interaction
+                    items:
+                      type: object
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Agent instance not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /refresh:
+    post:
+      tags:
+        - SOPHIA
+      summary: Refresh knowledge base
+      description: Trigger knowledge base refresh from security data sources
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - companyId
+                - agentAccessKey
+              properties:
+                companyId:
+                  type: integer
+                  description: Company identifier
+                agentAccessKey:
+                  type: string
+                  description: Agent access key for authentication
+      responses:
+        '200':
+          description: Refresh initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  company_id:
+                    type: integer
+                  vector_store_id:
+                    type: string
+                  note:
+                    type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /:
+    get:
+      tags:
+        - System
+      summary: Service information
+      responses:
+        '200':
+          description: Service details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service:
+                    type: string
+                  version:
+                    type: string
+                  description:
+                    type: string
+                  endpoints:
+                    type: object
+                  tools:
+                    type: array
+                    items:
+                      type: string
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string

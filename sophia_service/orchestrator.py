@@ -1,16 +1,24 @@
 from typing import Dict, Any, Optional, List
-from azure.ai.projects import AIProjectClient
-from azure.ai.projects.models import MessageTextContent, ThreadMessage, ThreadRun
-from azure.identity import DefaultAzureCredential
-from azure.core.credentials import AzureKeyCredential
 import json
+import sys
+import os
 
-from sophia_service.config import config
-from sophia_service.tools.rag_search import RAGSearchTool
-from sophia_service.tools.splunk import SplunkTool
-from sophia_service.tools.palo_alto import PaloAltoTool
-from sophia_service.tools.grafana import GrafanaTool
-from sophia_service.tools.create_ticket import CreateTicketTool
+try:
+    from azure.ai.projects import AIProjectClient
+    from azure.core.credentials import AzureKeyCredential
+    AZURE_AVAILABLE = True
+except ImportError:
+    AZURE_AVAILABLE = False
+    print("Warning: Azure AI Projects SDK not available, running in mock mode")
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from config import config
+from tools.rag_search import RAGSearchTool
+from tools.splunk import SplunkTool
+from tools.palo_alto import PaloAltoTool
+from tools.grafana import GrafanaTool
+from tools.create_ticket import CreateTicketTool
 
 class SophiaOrchestrator:
     """
@@ -75,7 +83,7 @@ Remember: You are READ-ONLY for monitoring. All infrastructure actions go throug
             return self.agents[agent_key]
         
         try:
-            if not config.AZURE_OPENAI_ENDPOINT or not config.AZURE_OPENAI_KEY:
+            if not AZURE_AVAILABLE or not config.AZURE_OPENAI_ENDPOINT or not config.AZURE_OPENAI_KEY:
                 agent_id = f"mock-agent-{company_id}"
                 self.agents[agent_key] = agent_id
                 return agent_id

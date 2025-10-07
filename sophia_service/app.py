@@ -2,10 +2,14 @@ from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import requests
 import json
+import sys
+import os
 from typing import Optional, Dict, Any
 
-from sophia_service.config import config
-from sophia_service.orchestrator import orchestrator
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from config import config
+from orchestrator import orchestrator
 
 app = Flask(__name__)
 CORS(app, origins=config.CORS_ORIGINS.split(','))

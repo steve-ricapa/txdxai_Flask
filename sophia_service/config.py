@@ -15,7 +15,7 @@ class SophiaConfig:
     AZURE_SEARCH_ENDPOINT: str = os.getenv('AZURE_SEARCH_ENDPOINT', '')
     AZURE_SEARCH_KEY: str = os.getenv('AZURE_SEARCH_KEY', '')
     
-    SOPHIA_PORT: int = int(os.getenv('SOPHIA_PORT', '5001'))
+    SOPHIA_PORT: int = int(os.getenv('SOPHIA_PORT', '8000'))
     SOPHIA_HOST: str = os.getenv('SOPHIA_HOST', '0.0.0.0')
     
     CORS_ORIGINS: str = os.getenv('CORS_ORIGINS', '*')
