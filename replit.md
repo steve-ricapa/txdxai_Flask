@@ -27,6 +27,7 @@ Preferred communication style: Simple, everyday language.
 - **Database**: PostgreSQL (Azure Database for PostgreSQL).
 - **ORM**: SQLAlchemy with Flask-SQLAlchemy.
 - **Migration Management**: Alembic via Flask-Migrate.
+- **Connection Pool**: Configured with `pool_pre_ping=True` and `pool_recycle=300` to handle SSL disconnects gracefully.
 - **Models**: `Company`, `User`, `Ticket`, `Integration`, `System`, `Alert`, `Vulnerability`, `AgentInstance`, `AgentSession`, `AgentMemoryRef`, `AuditLog`.
 
 ### Secret Management
@@ -84,7 +85,11 @@ Preferred communication style: Simple, everyday language.
 - **Configuration**: Flask-CORS with environment-configurable allowed origins.
 
 ### Frontend Strategy
-- **Approach**: Minimal test interface for endpoint validation.
+- **Basic Admin Interface**: Vanilla HTML/CSS/JavaScript frontend in `/basic_frontend/` for SOPHIA configuration and testing.
+  - **Registration/Login**: User registration with company creation, JWT authentication with localStorage persistence.
+  - **Agent Management**: Create and configure Azure credentials for SOPHIA agent instances.
+  - **Live Chat**: Interactive chat interface with SOPHIA using company ID and access key.
+  - **Served via Flask**: Frontend served through Flask static folder on port 5000.
 - **Production UI**: OpenAPI spec designed for import into VibeCode Workspace for web/mobile generation.
 
 ## External Dependencies
