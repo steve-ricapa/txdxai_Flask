@@ -55,4 +55,5 @@ localPort = 8000
 externalPort = 8000
 
 [deployment]
-deploymentTarget = "cloudrun"
+deploymentTarget = "vm"
+run = ["bash", "start_services.sh"]
