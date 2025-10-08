@@ -175,7 +175,31 @@ Preferred communication style: Simple, everyday language.
     - Real-time status updates for recording, transcription, and playback
     - Spanish voice interaction for accessible user experience
   - **Served via Flask**: Frontend served through Flask static folder on port 5000.
+  - **Frontend Access**: 
+    - Health check / API root: `/` (returns JSON status)
+    - Frontend UI: `/index.html`
+    - JavaScript: `/script.js`
 - **Production UI**: OpenAPI spec designed for import into VibeCode Workspace for web/mobile generation.
+
+## Deployment
+
+### Production Deployment (Replit VM)
+- **Type**: VM Deployment (stateful, always-running)
+- **Command**: `bash start_services.sh`
+- **Services**:
+  - Backend API: Gunicorn on port 5000 (2 workers)
+  - SOPHIA Service: Gunicorn on port 8000 (2 workers)
+- **Health Check**: `GET /` returns JSON `{"status": "healthy", "service": "TxDxAI", "version": "1.0.0"}`
+- **Frontend**: Accessible at `/index.html`
+- **Security**: 
+  - DEBUG mode disabled in production (config default: False)
+  - Gunicorn WSGI server (production-grade)
+  - All services bind to `0.0.0.0` for external access
+
+### Development
+- **Backend**: `python run.py` or `flask run`
+- **SOPHIA**: `python sophia_service/app.py`
+- **Combined**: `bash start_services.sh`
 
 ## External Dependencies
 

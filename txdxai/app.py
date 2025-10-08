@@ -80,11 +80,20 @@ def create_app(config_class=Config):
     
     @app.route('/')
     def index():
-        return send_from_directory(app.static_folder, 'index.html')
+        return jsonify({
+            'status': 'healthy',
+            'service': 'TxDxAI',
+            'version': '1.0.0',
+            'frontend': '/index.html'
+        }), 200
+    
+    @app.route('/index.html')
+    def frontend():
+        return send_from_directory(app.static_folder or '../basic_frontend', 'index.html')
     
     @app.route('/script.js')
     def script():
-        return send_from_directory(app.static_folder, 'script.js')
+        return send_from_directory(app.static_folder or '../basic_frontend', 'script.js')
     
     @app.route('/favicon.ico')
     def favicon():
