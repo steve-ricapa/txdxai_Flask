@@ -148,41 +148,51 @@ def process_user_message(message: str, company_id: int, user_id: int) -> Dict:
         rag_tool = agent_loader.get_rag_tool(company_id)
         
         if rag_tool:
-            context = rag_tool.get_context(message, max_tokens=1500)
+            # Generar respuesta natural en lugar de mostrar contexto RAW
+            natural_response = rag_tool.generate_natural_response(message)
             
-            security_tools = {
-                'palo_alto': get_palo_alto_alerts() if 'alert' in message.lower() or 'palo' in message.lower() else None,
-                'splunk': get_splunk_logs(message, limit=5) if 'log' in message.lower() or 'splunk' in message.lower() else None,
-                'grafana': get_grafana_metrics() if 'metric' in message.lower() or 'grafana' in message.lower() or 'métrica' in message.lower() else None,
-                'wazuh': get_wazuh_alerts() if 'wazuh' in message.lower() else None,
-                'meraki': get_meraki_network_status() if 'meraki' in message.lower() or 'network' in message.lower() or 'red' in message.lower() else None
-            }
+            # Determinar si necesitamos datos de herramientas de seguridad
+            message_lower = message.lower()
+            needs_security_tools = any(word in message_lower for word in [
+                'alert', 'log', 'metric', 'wazuh', 'meraki', 'palo', 'splunk', 'grafana',
+                'alerta', 'métrica', 'red', 'network'
+            ])
             
-            tools_used = [k for k, v in security_tools.items() if v is not None]
-            tools_data = {k: v for k, v in security_tools.items() if v is not None}
+            tools_used = ['rag_search']
+            tools_data = {}
             
-            response_parts = []
-            
-            if context:
-                response_parts.append(context)
-            
-            if tools_data:
-                response_parts.append("\n**Datos de Herramientas de Seguridad:**\n")
-                for tool_name, tool_data in tools_data.items():
-                    response_parts.append(f"\n**{tool_name.replace('_', ' ').title()}:**")
-                    if isinstance(tool_data, list) and tool_data:
-                        response_parts.append(f"Se encontraron {len(tool_data)} elementos")
-                    elif isinstance(tool_data, dict):
-                        response_parts.append(f"Estado: {tool_data.get('status', 'disponible')}")
-            
-            if not context and not tools_data:
-                response_parts.append("Encontré información relacionada con tu consulta. ¿Cómo puedo ayudarte más?")
+            if needs_security_tools:
+                security_tools = {
+                    'palo_alto': get_palo_alto_alerts() if 'alert' in message_lower or 'palo' in message_lower or 'alerta' in message_lower else None,
+                    'splunk': get_splunk_logs(message, limit=5) if 'log' in message_lower or 'splunk' in message_lower else None,
+                    'grafana': get_grafana_metrics() if 'metric' in message_lower or 'grafana' in message_lower or 'métrica' in message_lower else None,
+                    'wazuh': get_wazuh_alerts() if 'wazuh' in message_lower else None,
+                    'meraki': get_meraki_network_status() if 'meraki' in message_lower or 'network' in message_lower or 'red' in message_lower else None
+                }
+                
+                tools_used.extend([k for k, v in security_tools.items() if v is not None])
+                tools_data = {k: v for k, v in security_tools.items() if v is not None}
+                
+                response_parts = [natural_response]
+                
+                if tools_data:
+                    response_parts.append("\n\n**📊 Datos de Herramientas de Seguridad:**\n")
+                    for tool_name, tool_data in tools_data.items():
+                        response_parts.append(f"\n**{tool_name.replace('_', ' ').title()}:**")
+                        if isinstance(tool_data, list) and tool_data:
+                            response_parts.append(f"Se encontraron {len(tool_data)} elementos")
+                        elif isinstance(tool_data, dict):
+                            response_parts.append(f"Estado: {tool_data.get('status', 'disponible')}")
+                
+                response = '\n'.join(response_parts)
+            else:
+                response = natural_response
             
             return {
-                'response': '\n'.join(response_parts),
+                'response': response,
                 'intent': 'query',
-                'tool_calls': ['rag_search'] + tools_used,
-                'tools_data': tools_data
+                'tool_calls': tools_used,
+                'tools_data': tools_data if tools_data else None
             }
         else:
             return {

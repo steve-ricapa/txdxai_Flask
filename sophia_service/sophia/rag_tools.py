@@ -122,17 +122,38 @@ class RAGTool:
             }
         ]
         
-        # Simple keyword matching for mock results
+        # Improved keyword matching with scoring
         query_lower = query.lower()
-        relevant_docs = []
+        query_words = query_lower.split()
+        scored_docs = []
         
         for doc in mock_knowledge:
-            if any(word in doc["content"].lower() or word in doc["title"].lower() 
-                   for word in query_lower.split()):
-                relevant_docs.append(doc)
+            doc_text = (doc["content"] + " " + doc["title"]).lower()
+            
+            # Calculate relevance score based on keyword matches
+            match_count = sum(1 for word in query_words if word in doc_text and len(word) > 2)
+            
+            # Bonus for exact phrase match
+            if query_lower in doc_text:
+                match_count += 10
+            
+            # Bonus for category match
+            if 'métrica' in query_lower and doc['metadata']['category'] == 'metrics':
+                match_count += 5
+            elif 'alert' in query_lower and doc['metadata']['category'] == 'alerts':
+                match_count += 5
+            elif 'firewall' in query_lower or 'bloque' in query_lower and doc['metadata']['category'] == 'firewall':
+                match_count += 5
+            
+            if match_count > 0:
+                scored_docs.append((doc, match_count))
         
-        # Return top-k results
-        return relevant_docs[:top_k] if relevant_docs else mock_knowledge[:top_k]
+        # Sort by match count (descending) and return top-k
+        scored_docs.sort(key=lambda x: x[1], reverse=True)
+        relevant_docs = [doc for doc, _ in scored_docs[:top_k]]
+        
+        # Return relevant docs or top-k from knowledge base
+        return relevant_docs if relevant_docs else mock_knowledge[:top_k]
     
     def get_context(self, query: str, max_tokens: int = 2000) -> str:
         """
@@ -162,3 +183,53 @@ class RAGTool:
             total_chars += len(doc_text)
         
         return "\n".join(context_parts)
+    
+    def generate_natural_response(self, query: str) -> str:
+        """
+        Generate a natural conversational response based on the query
+        
+        Args:
+            query: User query
+        
+        Returns:
+            Natural language response
+        """
+        documents = self.search(query, top_k=3)
+        
+        if not documents:
+            return "Lo siento, no tengo información sobre eso en este momento. ¿Hay algo más en lo que pueda ayudarte?"
+        
+        query_lower = query.lower()
+        
+        # Detectar tipo de pregunta y generar respuesta apropiada
+        if any(word in query_lower for word in ['nombre', 'llamas', 'eres', 'quien', 'quién']):
+            # Pregunta sobre identidad
+            for doc in documents:
+                if 'sophia' in doc['title'].lower() or 'sophia' in doc['content'].lower():
+                    return f"Soy SOPHIA, un agente de IA multi-tenant para operaciones de ciberseguridad. Puedo analizar alertas de seguridad, proporcionar inteligencia de amenazas y coordinar la respuesta a incidentes. ¿En qué puedo ayudarte?"
+        
+        elif any(word in query_lower for word in ['alertas', 'alert', 'avisos', 'notificaciones']):
+            # Pregunta sobre alertas
+            for doc in documents:
+                if 'alert' in doc['content'].lower() or 'alert' in doc['title'].lower():
+                    return f"Puedo ayudarte con las alertas de seguridad. {doc['content']}"
+            return "Puedo ayudarte con las alertas de seguridad. Las alertas de seguridad pueden obtenerse desde Palo Alto Networks, Splunk, Wazuh y otras herramientas de seguridad integradas."
+        
+        elif any(word in query_lower for word in ['bloque', 'bloquear', 'firewall']):
+            # Pregunta sobre bloqueo
+            for doc in documents:
+                if 'bloque' in doc['content'].lower() or 'firewall' in doc['content'].lower():
+                    return doc['content']
+        
+        elif any(word in query_lower for word in ['métrica', 'monitoreo', 'rendimiento', 'cpu', 'memoria', 'sistema']):
+            # Pregunta sobre métricas
+            for doc in documents:
+                if 'métrica' in doc['content'].lower() or 'monitoreo' in doc['content'].lower() or 'sistema' in doc['content'].lower():
+                    return doc['content']
+        
+        # Respuesta genérica basada en el documento más relevante
+        top_doc = documents[0]
+        if top_doc['score'] > 0.7:
+            return top_doc['content']
+        else:
+            return f"Basándome en la información disponible: {top_doc['content']}"
