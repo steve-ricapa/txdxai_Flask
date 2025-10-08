@@ -17,9 +17,14 @@ gunicorn --bind 0.0.0.0:5000 \
 BACKEND_PID=$!
 echo "Backend started with PID: $BACKEND_PID"
 
-# Start SOPHIA Service (Port 8000)
+# Start SOPHIA Service with Gunicorn (Port 8000)
 echo "Starting SOPHIA service on port 8000..."
-python sophia_service/app.py &
+gunicorn --bind 0.0.0.0:8000 \
+  --workers 2 \
+  --timeout 120 \
+  --access-logfile - \
+  --error-logfile - \
+  "sophia_service.app:app" &
 
 SOPHIA_PID=$!
 echo "SOPHIA started with PID: $SOPHIA_PID"

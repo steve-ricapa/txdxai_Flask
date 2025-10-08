@@ -26,7 +26,7 @@ class SophiaConfig:
     CORS_ORIGINS: str = os.getenv('CORS_ORIGINS', '*')
     
     CACHE_TTL_SECONDS: int = int(os.getenv('CACHE_TTL_SECONDS', '3600'))
-    DEBUG: bool = os.getenv('DEBUG', 'True').lower() == 'true'
+    DEBUG: bool = os.getenv('DEBUG', 'False').lower() == 'true'
     
     @classmethod
     def validate(cls) -> bool:

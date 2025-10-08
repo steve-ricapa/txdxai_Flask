@@ -16,35 +16,19 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Flask API Server"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "SOPHIA Service"
+args = "TxDxAI Services"
 
 [[workflows.workflow]]
-name = "Flask API Server"
+name = "TxDxAI Services"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python run.py"
+args = "bash start_services.sh"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
-
-[[workflows.workflow]]
-name = "SOPHIA Service"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python sophia_service/app.py"
-waitForPort = 8000
 
 [[ports]]
 localPort = 5000
