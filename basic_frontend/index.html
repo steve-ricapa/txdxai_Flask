@@ -375,6 +375,9 @@
                     <textarea id="chatMessage" placeholder="Type your message to SOPHIA..."></textarea>
                 </div>
                 <button onclick="sendMessage()">Send to SOPHIA</button>
+                <button id="recordButton" onclick="toggleRecording()">🎤 Grabar Voz</button>
+                <button id="playButton" onclick="playResponse()" class="hidden">🔊 Reproducir Respuesta</button>
+                <div id="voiceStatus"></div>
                 <div id="chatHistory" class="chat-history"></div>
                 <div id="chatStatus"></div>
             </div>

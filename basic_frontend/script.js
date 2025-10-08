@@ -389,4 +389,136 @@ function addChatMessage(message, type) {
     messageDiv.innerHTML = `<strong>${type === 'user' ? 'You' : 'SOPHIA'}:</strong> ${message}`;
     chatHistory.appendChild(messageDiv);
     chatHistory.scrollTop = chatHistory.scrollHeight;
+    
+    // Show play button if SOPHIA responded
+    if (type === 'sophia') {
+        lastSophiaResponse = message;
+        document.getElementById('playButton').classList.remove('hidden');
+    }
+}
+
+// Voice functionality
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let lastSophiaResponse = '';
+
+async function toggleRecording() {
+    const recordButton = document.getElementById('recordButton');
+    const voiceStatus = document.getElementById('voiceStatus');
+    
+    if (!isRecording) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+            
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                await transcribeAudio(audioBlob);
+                stream.getTracks().forEach(track => track.stop());
+            };
+            
+            mediaRecorder.start();
+            isRecording = true;
+            recordButton.textContent = '⏹️ Detener Grabación';
+            recordButton.style.background = '#dc3545';
+            showStatus('voiceStatus', 'Grabando... Hable ahora', 'info');
+        } catch (error) {
+            showStatus('voiceStatus', `Error al acceder al micrófono: ${error.message}`, 'error');
+        }
+    } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        recordButton.textContent = '🎤 Grabar Voz';
+        recordButton.style.background = '#667eea';
+        showStatus('voiceStatus', 'Procesando audio...', 'info');
+    }
+}
+
+async function transcribeAudio(audioBlob) {
+    const companyId = document.getElementById('chatCompanyId').value;
+    const agentAccessKey = document.getElementById('chatAccessKey').value;
+    
+    if (!companyId || !agentAccessKey) {
+        showStatus('voiceStatus', 'Ingrese Company ID y Access Key primero', 'error');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.webm');
+    formData.append('companyId', companyId);
+    formData.append('agentAccessKey', agentAccessKey);
+    
+    try {
+        const response = await fetch(`${API_BASE}/voice/transcribe`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.text) {
+            document.getElementById('chatMessage').value = result.text;
+            showStatus('voiceStatus', `Transcrito: "${result.text}"`, 'success');
+        } else {
+            showStatus('voiceStatus', `Error: ${result.error || 'No se pudo transcribir'}`, 'error');
+        }
+    } catch (error) {
+        showStatus('voiceStatus', `Error al transcribir: ${error.message}`, 'error');
+    }
+}
+
+async function playResponse() {
+    const companyId = document.getElementById('chatCompanyId').value;
+    const agentAccessKey = document.getElementById('chatAccessKey').value;
+    
+    if (!companyId || !agentAccessKey) {
+        showStatus('voiceStatus', 'Ingrese Company ID y Access Key primero', 'error');
+        return;
+    }
+    
+    if (!lastSophiaResponse) {
+        showStatus('voiceStatus', 'No hay respuesta de SOPHIA para reproducir', 'error');
+        return;
+    }
+    
+    showStatus('voiceStatus', 'Generando audio...', 'info');
+    
+    try {
+        const response = await fetch(`${API_BASE}/voice/speak`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: lastSophiaResponse,
+                companyId: parseInt(companyId),
+                agentAccessKey: agentAccessKey
+            })
+        });
+        
+        if (response.ok) {
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            
+            audio.onended = () => {
+                URL.revokeObjectURL(audioUrl);
+                showStatus('voiceStatus', 'Reproducción completada', 'success');
+            };
+            
+            audio.play();
+            showStatus('voiceStatus', 'Reproduciendo respuesta...', 'info');
+        } else {
+            const error = await response.json();
+            showStatus('voiceStatus', `Error: ${error.error || 'No se pudo generar audio'}`, 'error');
+        }
+    } catch (error) {
+        showStatus('voiceStatus', `Error al reproducir: ${error.message}`, 'error');
+    }
 }
