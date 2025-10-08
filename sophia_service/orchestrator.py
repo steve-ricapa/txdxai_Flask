@@ -79,8 +79,12 @@ Remember: You are READ-ONLY for monitoring. All infrastructure actions go throug
         """
         agent_key = f"company-{company_id}"
         
-        if agent_key in self.agents:
+        # Check if agent already initialized with cached config
+        if agent_key in self.agents and company_id in self.config_cache:
             return self.agents[agent_key]['agent_id']
+        
+        # Store config in cache
+        self.config_cache[company_id] = azure_config
         
         try:
             azure_openai_endpoint = azure_config.get('azure_openai_endpoint')
@@ -322,6 +326,19 @@ Remember: You are READ-ONLY for monitoring. All infrastructure actions go throug
                 "error": True
             }
     
+    def invalidate_cache(self, company_id: int) -> None:
+        """
+        Invalidate cached configuration for a company
+        
+        Args:
+            company_id: Company identifier
+        """
+        agent_key = f"company-{company_id}"
+        if company_id in self.config_cache:
+            del self.config_cache[company_id]
+        if agent_key in self.agents:
+            del self.agents[agent_key]
+    
     def refresh_knowledge(self, company_id: int, vector_store_id: str) -> Dict[str, Any]:
         """
         Refresh knowledge base from sources
@@ -333,6 +350,9 @@ Remember: You are READ-ONLY for monitoring. All infrastructure actions go throug
         Returns:
             Refresh status
         """
+        # Invalidate cache to pick up any credential updates
+        self.invalidate_cache(company_id)
+        
         return {
             "success": True,
             "message": "Knowledge refresh initiated",
