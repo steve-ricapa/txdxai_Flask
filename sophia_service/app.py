@@ -105,9 +105,15 @@ def log_audit(action: str, entity_type: str, entity_id: str, payload: Dict, auth
         pass
 
 
-def process_user_message(message: str, company_id: int, user_id: int) -> Dict:
+def process_user_message(message: str, company_id: int, user_id: int, auth_token: str = "") -> Dict:
     """
     Process user message with intent detection and routing
+    
+    Args:
+        message: User message
+        company_id: Company ID
+        user_id: User ID
+        auth_token: Agent JWT token for backend authentication
     
     Returns:
         Dict with response and metadata
@@ -122,13 +128,14 @@ def process_user_message(message: str, company_id: int, user_id: int) -> Dict:
                 action_request=action_request,
                 company_id=company_id,
                 user_id=user_id,
+                auth_token=auth_token,
                 context={"intent_type": intent_type}
             )
             
             return {
                 'response': ticket_result['escalation_message'],
                 'intent': 'action_escalated',
-                'ticket_id': ticket_result['victoria_response'].get('ticket_id'),
+                'ticket_id': ticket_result.get('ticket_id'),
                 'tool_calls': ['create_victoria_ticket']
             }
         else:
@@ -272,7 +279,7 @@ def chat():
     
     memory_manager.add_message(thread_id, 'user', message)
     
-    result = process_user_message(message, company_id, user_id)
+    result = process_user_message(message, company_id, user_id, auth_token)
     
     memory_manager.add_message(thread_id, 'assistant', result['response'])
     

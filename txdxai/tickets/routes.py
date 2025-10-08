@@ -1,10 +1,10 @@
 from flask import request, jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt
 from datetime import datetime
 from txdxai.tickets import tickets_bp
 from txdxai.extensions import db
 from txdxai.db.models import Ticket
-from txdxai.common.errors import ValidationError, NotFoundError
+from txdxai.common.errors import ValidationError, NotFoundError, ForbiddenError
 from txdxai.common.utils import get_current_user, log_audit
 
 @tickets_bp.route('', methods=['GET'])
@@ -127,3 +127,61 @@ def delete_ticket(ticket_id):
     return jsonify({
         'message': 'Ticket deleted successfully'
     }), 200
+
+
+@tickets_bp.route('/agent-create', methods=['POST'])
+@jwt_required()
+def agent_create_ticket():
+    """
+    Endpoint for SOPHIA agent to create tickets
+    Requires agent JWT token with agent:invoke scope
+    """
+    claims = get_jwt()
+    
+    # Verify this is an agent token
+    scopes = claims.get('scopes', [])
+    if 'agent:invoke' not in scopes:
+        raise ForbiddenError('Agent scope required')
+    
+    company_id = claims.get('company_id')
+    if not company_id:
+        raise ValidationError('company_id not found in token')
+    
+    data = request.get_json()
+    if not data:
+        raise ValidationError('Request body is required')
+    
+    subject = data.get('subject')
+    description = data.get('description')
+    user_id = data.get('userId')
+    severity = data.get('severity', 'medium')
+    metadata = data.get('metadata', {})
+    
+    if not subject:
+        raise ValidationError('subject is required')
+    
+    # Create ticket with backend-generated ID
+    ticket = Ticket(
+        company_id=company_id,
+        created_by_user_id=user_id,
+        subject=subject,
+        description=description,
+        status='PENDING'
+    )
+    
+    db.session.add(ticket)
+    db.session.commit()
+    
+    # Log the creation
+    log_audit('CREATE', 'TICKET', ticket.id, {
+        'subject': subject,
+        'status': 'PENDING',
+        'severity': severity,
+        'agent_created': True
+    })
+    
+    return jsonify({
+        'success': True,
+        'ticket_id': ticket.id,
+        'ticket': ticket.to_dict(include_creator=False)
+    }), 201

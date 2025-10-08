@@ -76,7 +76,11 @@ Preferred communication style: Simple, everyday language.
 - **victor/ticket_models.py**: Data models for tickets and action requests
 - **victor/client_stub.py**: VictorIA client stub for ticket handoff
 - **Handoff Pattern**: High-risk actions (block_ip, quarantine_device, etc.) automatically escalate to VictorIA
-- **Ticket Creation**: Automatic ticket generation with severity, context, and metadata
+- **Ticket Creation**: Backend PostgreSQL assigns unique ticket IDs (autoincremental)
+  - SOPHIA calls `/api/tickets/agent-create` with agent JWT token
+  - Backend creates ticket and returns unique ID
+  - VictorIA receives ticket with backend-assigned ID
+  - No ID collisions: PostgreSQL guarantees uniqueness
 
 #### Agent Model & Configuration
 - **AgentInstance**: Stores per-company Azure configuration
