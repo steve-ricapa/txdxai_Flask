@@ -245,6 +245,57 @@ def refresh():
     return jsonify(result), 200
 
 
+@app.route('/config/test', methods=['POST'])
+def test_config():
+    """
+    Test Azure credentials and configuration
+    
+    Request body:
+    {
+        "companyId": int,
+        "agentAccessKey": str
+    }
+    """
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'Request body required'}), 400
+    
+    company_id = data.get('companyId')
+    agent_access_key = data.get('agentAccessKey')
+    
+    if not all([company_id, agent_access_key]):
+        return jsonify({
+            'error': 'companyId and agentAccessKey are required'
+        }), 400
+    
+    auth_data = validate_agent_access(company_id, agent_access_key)
+    if not auth_data:
+        return jsonify({'error': 'Invalid agent access credentials'}), 401
+    
+    agent_instance = auth_data.get('agent_instance', {})
+    
+    # Check which credentials are configured
+    has_openai = bool(agent_instance.get('azure_openai_endpoint') and agent_instance.get('azure_openai_key'))
+    has_search = bool(agent_instance.get('azure_search_endpoint') and agent_instance.get('azure_search_key'))
+    
+    config_status = {
+        'company_id': company_id,
+        'agent_instance_id': auth_data.get('agent_instance_id'),
+        'azure_openai_configured': has_openai,
+        'azure_search_configured': has_search,
+        'deployment_model': agent_instance.get('azure_openai_deployment', 'not_set'),
+        'status': 'ready' if has_openai else 'mock_mode'
+    }
+    
+    if has_openai:
+        config_status['message'] = 'All Azure credentials configured - full functionality available'
+    else:
+        config_status['message'] = 'Azure credentials missing - running in mock mode. Configure credentials for full functionality.'
+    
+    return jsonify(config_status), 200
+
+
 @app.route('/', methods=['GET'])
 def index():
     """Service info endpoint"""
@@ -255,7 +306,8 @@ def index():
         'endpoints': {
             '/health': 'Health check',
             '/chat': 'Chat with SOPHIA (POST)',
-            '/refresh': 'Refresh knowledge base (POST)'
+            '/refresh': 'Refresh knowledge base (POST)',
+            '/config/test': 'Test Azure configuration (POST)'
         },
         'tools': [
             'rag_search - Search knowledge base',
