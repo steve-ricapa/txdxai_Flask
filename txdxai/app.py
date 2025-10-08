@@ -80,6 +80,10 @@ def create_app(config_class=Config):
     def index():
         return send_from_directory(app.static_folder, 'index.html')
     
+    @app.route('/script.js')
+    def script():
+        return send_from_directory(app.static_folder, 'script.js')
+    
     @app.route('/favicon.ico')
     def favicon():
         return '', 204
