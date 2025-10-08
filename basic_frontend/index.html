@@ -276,6 +276,26 @@
                             <input type="password" id="azureSearchKey" placeholder="Your Azure Search API Key">
                         </div>
                     </div>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Azure Speech Endpoint (optional)</label>
+                            <input type="text" id="azureSpeechEndpoint" placeholder="https://your-region.api.cognitive.microsoft.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Azure Speech Key (optional)</label>
+                            <input type="password" id="azureSpeechKey" placeholder="Your Azure Speech API Key">
+                        </div>
+                    </div>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Azure Speech Region (optional)</label>
+                            <input type="text" id="azureSpeechRegion" placeholder="eastus, westeurope, etc">
+                        </div>
+                        <div class="form-group">
+                            <label>Azure Speech Voice (optional)</label>
+                            <input type="text" id="azureSpeechVoiceName" placeholder="es-ES-ElviraNeural">
+                        </div>
+                    </div>
                     <button onclick="createAgentInstance()">Create Instance</button>
                     <button class="secondary" onclick="hideCreateForm()">Cancel</button>
                 </div>

@@ -225,7 +225,11 @@ async function createAgentInstance() {
         azureOpenaiDeployment: document.getElementById('azureOpenaiDeployment').value,
         azureProjectId: document.getElementById('azureProjectId').value,
         azureSearchEndpoint: document.getElementById('azureSearchEndpoint').value,
-        azureSearchKey: document.getElementById('azureSearchKey').value
+        azureSearchKey: document.getElementById('azureSearchKey').value,
+        azureSpeechEndpoint: document.getElementById('azureSpeechEndpoint').value,
+        azureSpeechKey: document.getElementById('azureSpeechKey').value,
+        azureSpeechRegion: document.getElementById('azureSpeechRegion').value,
+        azureSpeechVoiceName: document.getElementById('azureSpeechVoiceName').value
     };
 
     // Remove empty fields
@@ -251,6 +255,10 @@ async function createAgentInstance() {
         document.getElementById('azureProjectId').value = '';
         document.getElementById('azureSearchEndpoint').value = '';
         document.getElementById('azureSearchKey').value = '';
+        document.getElementById('azureSpeechEndpoint').value = '';
+        document.getElementById('azureSpeechKey').value = '';
+        document.getElementById('azureSpeechRegion').value = '';
+        document.getElementById('azureSpeechVoiceName').value = '';
         
         hideCreateForm();
     } else {
