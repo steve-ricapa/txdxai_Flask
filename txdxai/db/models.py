@@ -300,6 +300,11 @@ class AgentInstance(db.Model):
     azure_search_endpoint = db.Column(db.String(500), nullable=True)
     azure_search_key_secret_id = db.Column(db.String(255), nullable=True)
     
+    azure_speech_endpoint = db.Column(db.String(500), nullable=True)
+    azure_speech_key_secret_id = db.Column(db.String(255), nullable=True)
+    azure_speech_region = db.Column(db.String(100), nullable=True)
+    azure_speech_voice_name = db.Column(db.String(100), nullable=True, default='es-ES-ElviraNeural')
+    
     keyvault_secret_id = db.Column(db.String(255), nullable=True)
     client_access_key_hash = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='ACTIVE')
@@ -318,6 +323,9 @@ class AgentInstance(db.Model):
             'azure_openai_endpoint': self.azure_openai_endpoint,
             'azure_openai_deployment': self.azure_openai_deployment,
             'azure_search_endpoint': self.azure_search_endpoint,
+            'azure_speech_endpoint': self.azure_speech_endpoint,
+            'azure_speech_region': self.azure_speech_region,
+            'azure_speech_voice_name': self.azure_speech_voice_name,
             'status': self.status,
             'settings': self.settings,
             'created_at': self.created_at.isoformat() if self.created_at else None,

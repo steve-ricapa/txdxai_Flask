@@ -1,0 +1,132 @@
+PROMPT — Integración de Voz (Speech) para SOPHIA
+
+Objetivo
+Añadir soporte de voz (entrada por voz y salida en audio) a SOPHIA.
+
+Speech-to-Text (STT): permitir que el cliente envíe un archivo de audio y obtenga el texto.
+
+Text-to-Speech (TTS): permitir que SOPHIA devuelva su respuesta también como audio.
+
+Multi-tenant seguro: cada empresa podrá registrar sus propias credenciales de Azure Speech (endpoint, key, region y voz).
+
+Mantener la arquitectura modular actual y usar Key Vault para almacenar las claves.
+
+🏗️ Cambios esperados en el backend principal
+📦 Base de datos y backend REST
+
+Extender la tabla agent_instances (o la tabla de configuración de agentes) para incluir campos:
+
+azure_speech_endpoint
+
+azure_speech_key_secret_id
+
+azure_speech_region
+
+azure_speech_voice_name (opcional, por defecto es-ES-ElviraNeural)
+
+Actualizar los endpoints de administración (POST /admin/agent-instances y PUT /admin/agent-instances/{id}) para aceptar y guardar estos valores.
+
+Las keys reales deben guardarse en Azure Key Vault y solo persistir el secret_id en DB.
+
+🌐 Nuevos endpoints REST para voz
+
+POST /api/voice/transcribe
+
+Body: audio en formato WAV/MP3/OGG (multipart/form-data) + companyId + agentAccessKey.
+
+Función:
+
+Validar credenciales de la empresa.
+
+Usar azure-cognitiveservices-speech o azure.speech SDK para transcribir el audio a texto.
+
+Devolver JSON:
+
+{ "text": "Transcripción resultante del audio" }
+
+
+POST /api/voice/speak
+
+Body: JSON con:
+
+{
+  "companyId": "...",
+  "agentAccessKey": "...",
+  "text": "Texto que se convertirá en audio"
+}
+
+
+Función:
+
+Validar credenciales de la empresa.
+
+Usar Text-to-Speech de Azure para generar un archivo de audio.
+
+Devolver audio (MIME audio/mpeg) o una URL temporal.
+
+⚠️ Mantener estos endpoints separados de SOPHIA (pueden vivir en el microservicio o en el backend principal), pero usando el mismo esquema multi-tenant.
+
+🔐 Seguridad
+
+Reutilizar el flujo actual de /agents/auth/token para verificar empresa y agentAccessKey.
+
+No devolver las claves de Speech al cliente; usarlas solo internamente.
+
+Cachear configuración por company-{id} igual que ya se hace con OpenAI/Search.
+
+🧩 Cambios esperados en el frontend básico
+
+Agregar en la sección de administración de credenciales Azure campos nuevos:
+
+Azure Speech Endpoint
+
+Azure Speech Key
+
+Azure Speech Region
+
+Azure Speech Voice Name (opcional, valor por defecto es-ES-ElviraNeural).
+
+En el panel de prueba/chat:
+
+Botón para grabar audio y enviarlo a /api/voice/transcribe → muestra el texto resultante en el campo de entrada de chat.
+
+Botón para reproducir audio al recibir una respuesta (usa /api/voice/speak para convertir el texto de SOPHIA a voz).
+
+(Mantener diseño simple; no requiere streaming en tiempo real, solo push-to-talk básico.)
+
+⚡ Implementación técnica recomendada
+
+Speech-to-Text (STT):
+
+import azure.cognitiveservices.speech as speechsdk
+
+def transcribe_audio(file_path, speech_key, region):
+    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=region)
+    audio_input = speechsdk.AudioConfig(filename=file_path)
+    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_input)
+    result = speech_recognizer.recognize_once()
+    return result.text
+
+
+Text-to-Speech (TTS):
+
+def synthesize_speech(text, speech_key, region, voice="es-ES-ElviraNeural"):
+    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=region)
+    speech_config.speech_synthesis_voice_name = voice
+    audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=False)
+    synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
+    result = synthesizer.speak_text_async(text).get()
+    return result.audio_data
+
+✅ Resultado esperado
+
+Cada empresa puede almacenar y administrar sus credenciales de Azure Speech igual que con OpenAI y Search.
+
+SOPHIA y VictorIA podrán recibir audio del usuario y devolver respuestas habladas.
+
+El frontend tendrá un flujo simple: grabar → transcribir → enviar → recibir → reproducir.
+
+Todo el manejo de claves sigue siendo multi-tenant y seguro con Key Vault.
+
+Mantener la modularidad actual de SOPHIA y no alterar el core del agent framework.
+Solo agregar módulos nuevos para speech_service.py y endpoints REST para transcribe y speak.
