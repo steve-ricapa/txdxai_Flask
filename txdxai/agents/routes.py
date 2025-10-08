@@ -7,6 +7,7 @@ from txdxai.db.models import AgentInstance
 from txdxai.common.errors import UnauthorizedError, ValidationError
 from txdxai.security.keys import verify_access_key
 from txdxai.common.utils import log_audit
+from txdxai.integrations.keyvault import retrieve_secret
 
 @agents_bp.route('/auth/token', methods=['POST'])
 def authenticate_agent():
@@ -62,6 +63,20 @@ def authenticate_agent():
         'agent_type': agent_type
     })
     
+    azure_openai_key = None
+    if instance.azure_openai_key_secret_id:
+        try:
+            azure_openai_key = retrieve_secret(instance.azure_openai_key_secret_id)
+        except:
+            pass
+    
+    azure_search_key = None
+    if instance.azure_search_key_secret_id:
+        try:
+            azure_search_key = retrieve_secret(instance.azure_search_key_secret_id)
+        except:
+            pass
+    
     return jsonify({
         'access_token': service_token,
         'token_type': 'Bearer',
@@ -74,6 +89,11 @@ def authenticate_agent():
             'azure_project_id': instance.azure_project_id,
             'azure_agent_id': instance.azure_agent_id,
             'azure_vector_store_id': instance.azure_vector_store_id,
+            'azure_openai_endpoint': instance.azure_openai_endpoint,
+            'azure_openai_key': azure_openai_key,
+            'azure_openai_deployment': instance.azure_openai_deployment,
+            'azure_search_endpoint': instance.azure_search_endpoint,
+            'azure_search_key': azure_search_key,
             'status': instance.status,
             'settings': instance.settings
         }
@@ -91,6 +111,20 @@ def get_agent_instance_metadata(instance_id):
     if not instance:
         raise UnauthorizedError('Invalid instance')
     
+    azure_openai_key = None
+    if instance.azure_openai_key_secret_id:
+        try:
+            azure_openai_key = retrieve_secret(instance.azure_openai_key_secret_id)
+        except:
+            pass
+    
+    azure_search_key = None
+    if instance.azure_search_key_secret_id:
+        try:
+            azure_search_key = retrieve_secret(instance.azure_search_key_secret_id)
+        except:
+            pass
+    
     return jsonify({
         'id': instance.id,
         'company_id': instance.company_id,
@@ -98,6 +132,11 @@ def get_agent_instance_metadata(instance_id):
         'azure_project_id': instance.azure_project_id,
         'azure_agent_id': instance.azure_agent_id,
         'azure_vector_store_id': instance.azure_vector_store_id,
+        'azure_openai_endpoint': instance.azure_openai_endpoint,
+        'azure_openai_key': azure_openai_key,
+        'azure_openai_deployment': instance.azure_openai_deployment,
+        'azure_search_endpoint': instance.azure_search_endpoint,
+        'azure_search_key': azure_search_key,
         'status': instance.status,
         'settings': instance.settings
     }), 200

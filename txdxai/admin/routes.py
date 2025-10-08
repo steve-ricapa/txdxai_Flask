@@ -18,9 +18,19 @@ def create_agent_instance():
     
     company_id = data.get('companyId', user.company_id)
     agent_type = data.get('agentType', 'SOPHIA')
-    region = data.get('region')
-    model = data.get('model')
+    
     azure_project_id = data.get('azureProjectId')
+    azure_agent_id = data.get('azureAgentId')
+    azure_vector_store_id = data.get('azureVectorStoreId')
+    
+    azure_openai_endpoint = data.get('azureOpenaiEndpoint')
+    azure_openai_key = data.get('azureOpenaiKey')
+    azure_openai_deployment = data.get('azureOpenaiDeployment')
+    
+    azure_search_endpoint = data.get('azureSearchEndpoint')
+    azure_search_key = data.get('azureSearchKey')
+    
+    region = data.get('region')
     
     if company_id != user.company_id:
         raise ForbiddenError('Cannot create agent instance for other companies')
@@ -28,30 +38,34 @@ def create_agent_instance():
     access_key = generate_access_key(40)
     access_key_hash = hash_access_key(access_key)
     
-    keyvault_secret_id = None
-    if azure_project_id:
-        import json
-        azure_credentials = {
-            'azure_project_id': azure_project_id,
-            'region': region,
-            'model': model
-        }
-        secret_name = f"agent-{agent_type.lower()}-{company_id}-{datetime.utcnow().timestamp()}"
-        keyvault_secret_id = store_secret(secret_name, json.dumps(azure_credentials))
+    azure_openai_key_secret_id = None
+    if azure_openai_key:
+        secret_name = f"agent-{agent_type.lower()}-{company_id}-openai-{datetime.utcnow().timestamp()}"
+        azure_openai_key_secret_id = store_secret(secret_name, azure_openai_key)
+    
+    azure_search_key_secret_id = None
+    if azure_search_key:
+        secret_name = f"agent-{agent_type.lower()}-{company_id}-search-{datetime.utcnow().timestamp()}"
+        azure_search_key_secret_id = store_secret(secret_name, azure_search_key)
     
     settings = {
-        'region': region,
-        'model': model
+        'region': region
     }
     
     agent_instance = AgentInstance(
         company_id=company_id,
         agent_type=agent_type,
         azure_project_id=azure_project_id,
+        azure_agent_id=azure_agent_id,
+        azure_vector_store_id=azure_vector_store_id,
+        azure_openai_endpoint=azure_openai_endpoint,
+        azure_openai_key_secret_id=azure_openai_key_secret_id,
+        azure_openai_deployment=azure_openai_deployment,
+        azure_search_endpoint=azure_search_endpoint,
+        azure_search_key_secret_id=azure_search_key_secret_id,
         client_access_key_hash=access_key_hash,
-        keyvault_secret_id=keyvault_secret_id,
         settings=settings,
-        status='ACTIVE' if azure_project_id else 'TO_PROVISION'
+        status='ACTIVE' if azure_openai_endpoint else 'TO_PROVISION'
     )
     
     db.session.add(agent_instance)
@@ -59,7 +73,9 @@ def create_agent_instance():
     
     log_audit('CREATE', 'AGENT_INSTANCE', agent_instance.id, {
         'agent_type': agent_type,
-        'company_id': company_id
+        'company_id': company_id,
+        'azure_openai_endpoint': azure_openai_endpoint,
+        'azure_openai_deployment': azure_openai_deployment
     })
     
     return jsonify({
