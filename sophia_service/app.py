@@ -163,6 +163,9 @@ def chat():
         'azure_search_key': agent_instance.get('azure_search_key')
     }
     
+    # Extract vector store ID from config
+    vector_store_id = azure_config.get('azure_vector_store_id')
+    
     agent_id = orchestrator.initialize_agent(company_id, azure_config)
     
     if not thread_id:
