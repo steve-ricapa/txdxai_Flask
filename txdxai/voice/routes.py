@@ -12,7 +12,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-ALLOWED_AUDIO_EXTENSIONS = {'wav', 'mp3', 'ogg', 'm4a', 'flac'}
+ALLOWED_AUDIO_EXTENSIONS = {'wav', 'mp3', 'ogg', 'm4a', 'flac', 'webm'}
 
 
 def allowed_file(filename):
@@ -71,7 +71,7 @@ def transcribe_audio():
     Speech-to-Text endpoint
     
     Multipart form data:
-        - audio: Audio file (WAV, MP3, OGG, M4A, FLAC)
+        - audio: Audio file (WAV, MP3, OGG, M4A, FLAC, WEBM)
         - companyId: Company ID
         - agentAccessKey: Agent access key
     

@@ -89,6 +89,10 @@ Preferred communication style: Simple, everyday language.
   - `azure_openai_deployment`: Model deployment (e.g., gpt-4o, gpt-4o-mini)
   - `azure_search_endpoint`: Company-specific Azure AI Search endpoint
   - `azure_search_key_secret_id`: Key Vault reference to search key
+  - `azure_speech_endpoint`: Company-specific Azure Speech endpoint
+  - `azure_speech_key_secret_id`: Key Vault reference to Speech API key
+  - `azure_speech_region`: Azure region for Speech service (e.g., eastus, westeurope)
+  - `azure_speech_voice_name`: Spanish voice for TTS (default: es-ES-ElviraNeural)
   - `azure_project_id`, `azure_agent_id`, `azure_vector_store_id`: Azure AI project references
 - **Access Control**: 
   - ADMIN-only CRUD operations via `/admin/agent-instances` endpoints
@@ -118,6 +122,36 @@ Preferred communication style: Simple, everyday language.
 - `/cache/stats`: Cache statistics
 - `/cache/invalidate`: Invalidate company cache
 
+### Voice/Speech Integration
+- **Service**: Azure Cognitive Services Speech SDK for multilingual voice interaction.
+- **Architecture**: Multi-tenant voice input/output with company-specific Azure Speech credentials.
+- **Module**: `common/speech_service.py` provides STT (Speech-to-Text) and TTS (Text-to-Speech) functions.
+
+#### Speech-to-Text (STT)
+- **Function**: `transcribe_audio(audio_data, speech_config)` - Converts audio to Spanish text
+- **Endpoint**: `POST /api/voice/transcribe`
+  - Accepts audio file (WebM format from browser MediaRecorder)
+  - Validates company credentials and retrieves Speech key from Key Vault
+  - Returns JSON: `{"text": "transcribed_text", "status": "success"}`
+- **Audio Format**: Browser-captured WebM, converted internally for Azure compatibility
+- **Language**: Spanish (es-ES) for recognition
+
+#### Text-to-Speech (TTS)
+- **Function**: `synthesize_speech(text, speech_config, voice_name)` - Converts text to Spanish audio
+- **Endpoint**: `POST /api/voice/speak`
+  - Accepts JSON: `{"text": "response_text", "companyId": 1, "agentAccessKey": "key"}`
+  - Validates company credentials and retrieves Speech key from Key Vault
+  - Streams MP3 audio at 16kHz for optimal quality
+- **Voice**: Configurable per company, default `es-ES-ElviraNeural` (Spanish female voice)
+- **Audio Format**: MP3, streamed directly to client for playback
+
+#### Security & Multi-Tenancy
+- **Authentication**: Agent access key validation per company
+- **Credential Retrieval**: Speech keys fetched from Azure Key Vault using secret IDs
+- **Isolation**: Each company uses their own Azure Speech endpoint and credentials
+- **Error Handling**: Structured responses with Spanish error messages for user clarity
+- **Temporary Files**: Audio processing files cleaned up automatically after synthesis
+
 ### Error Handling
 - **Custom Exception Hierarchy**: `TxDxAIError` base class with specialized exceptions.
 - **HTTP Status Mapping**: Exceptions map to appropriate HTTP status codes.
@@ -135,6 +169,11 @@ Preferred communication style: Simple, everyday language.
   - **Registration/Login**: User registration with company creation, JWT authentication with localStorage persistence.
   - **Agent Management**: Create and configure Azure credentials for SOPHIA agent instances.
   - **Live Chat**: Interactive chat interface with SOPHIA using company ID and access key.
+  - **Voice Controls**: 
+    - 🎤 Record button - Captures audio using MediaRecorder API, sends to `/api/voice/transcribe`
+    - 🔊 Play button - Synthesizes SOPHIA responses via `/api/voice/speak` and plays audio
+    - Real-time status updates for recording, transcription, and playback
+    - Spanish voice interaction for accessible user experience
   - **Served via Flask**: Frontend served through Flask static folder on port 5000.
 - **Production UI**: OpenAPI spec designed for import into VibeCode Workspace for web/mobile generation.
 
@@ -149,6 +188,7 @@ Preferred communication style: Simple, everyday language.
 - **Flask Ecosystem**: `Flask`, `Flask-SQLAlchemy`, `Flask-JWT-Extended`, `Flask-Migrate`, `Flask-CORS`, `Flasgger`.
 - **Security & Cryptography**: `Werkzeug`, `azure-identity`, `azure-keyvault-secrets`.
 - **Database**: `psycopg2` or `psycopg2-binary`, `SQLAlchemy`.
+- **Azure Cognitive Services**: `azure-cognitiveservices-speech` for voice/speech functionality.
 
 ### Environment Configuration
 - **Required Variables**: `DATABASE_URL`, `SESSION_SECRET`/`JWT_SECRET_KEY`, `AZURE_KEY_VAULT_URL`, `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `CORS_ORIGINS`.

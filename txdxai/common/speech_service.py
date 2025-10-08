@@ -1,4 +1,5 @@
 import os
+import subprocess
 import tempfile
 import logging
 from typing import Optional, Dict
@@ -11,6 +12,51 @@ class SpeechService:
     """Azure Speech Service for Speech-to-Text and Text-to-Speech"""
     
     @staticmethod
+    def convert_webm_to_wav(webm_path: str) -> str:
+        """
+        Convert WebM audio to WAV format using ffmpeg
+        
+        Args:
+            webm_path: Path to the WebM file
+            
+        Returns:
+            Path to the converted WAV file
+        """
+        try:
+            wav_fd, wav_path = tempfile.mkstemp(suffix='.wav')
+            os.close(wav_fd)
+            
+            cmd = [
+                'ffmpeg', '-i', webm_path,
+                '-acodec', 'pcm_s16le',
+                '-ar', '16000',
+                '-ac', '1',
+                '-y',
+                wav_path
+            ]
+            
+            result = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=30
+            )
+            
+            if result.returncode != 0:
+                logger.error(f"FFmpeg conversion failed: {result.stderr.decode()}")
+                raise Exception("Error al convertir audio WebM a WAV")
+            
+            logger.info(f"Converted WebM to WAV: {wav_path}")
+            return wav_path
+            
+        except subprocess.TimeoutExpired:
+            logger.error("FFmpeg conversion timed out")
+            raise Exception("Tiempo de espera excedido al convertir audio")
+        except Exception as e:
+            logger.error(f"Error converting WebM to WAV: {str(e)}")
+            raise
+    
+    @staticmethod
     def transcribe_audio(
         audio_file_path: str,
         speech_key: str,
@@ -20,14 +66,23 @@ class SpeechService:
         Transcribe audio file to text using Azure Speech-to-Text
         
         Args:
-            audio_file_path: Path to the audio file (WAV, MP3, OGG)
+            audio_file_path: Path to the audio file (WAV, MP3, OGG, WEBM)
             speech_key: Azure Speech API key
             region: Azure region (e.g., 'eastus', 'westeurope')
             
         Returns:
             Dictionary with 'text' and 'status'
         """
+        converted_file = None
         try:
+            # Convert WebM to WAV if needed
+            if audio_file_path.lower().endswith('.webm'):
+                logger.info("Converting WebM to WAV for Azure Speech SDK")
+                converted_file = SpeechService.convert_webm_to_wav(audio_file_path)
+                audio_file_to_use = converted_file
+            else:
+                audio_file_to_use = audio_file_path
+            
             speech_config = speechsdk.SpeechConfig(
                 subscription=speech_key,
                 region=region
@@ -35,7 +90,7 @@ class SpeechService:
             
             speech_config.speech_recognition_language = "es-ES"
             
-            audio_config = speechsdk.AudioConfig(filename=audio_file_path)
+            audio_config = speechsdk.AudioConfig(filename=audio_file_to_use)
             
             speech_recognizer = speechsdk.SpeechRecognizer(
                 speech_config=speech_config,
@@ -79,6 +134,14 @@ class SpeechService:
                 'status': 'error',
                 'error': str(e)
             }
+        finally:
+            # Clean up converted file if it was created
+            if converted_file and os.path.exists(converted_file):
+                try:
+                    os.remove(converted_file)
+                    logger.info(f"Cleaned up converted file: {converted_file}")
+                except Exception as e:
+                    logger.warning(f"Failed to clean up converted file: {str(e)}")
     
     @staticmethod
     def synthesize_speech(
