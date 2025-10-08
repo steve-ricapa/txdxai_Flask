@@ -43,9 +43,43 @@ Preferred communication style: Simple, everyday language.
 
 ### SOPHIA AI Agent System
 - **Purpose**: Multi-tenant AI agent provisioning for automation and security workflows.
-- **Architecture**: True multi-tenant design where each company has dedicated Azure credentials.
+- **Architecture**: Modular design with intent routing and VictorIA handoff capabilities.
 - **Separate Microservice**: Runs on port 8000, communicates with main backend (port 5000).
-- **Agent Model**: `AgentInstance` stores per-company Azure configuration:
+
+#### Modular Architecture (v2.0)
+- **sophia/agent_loader.py**: Dynamic per-tenant agent initialization with Azure AI integration
+  - Initializes agents with company-specific Azure credentials
+  - Maintains separate RAG tools per company
+  - Supports both Azure AI mode and mock mode fallback
+- **sophia/memory.py**: Session and conversation thread management
+  - Creates and manages conversation threads per company/user
+  - Stores message history with timestamps
+  - Thread-based context retrieval
+- **sophia/rag_tools.py**: RAG (Retrieval-Augmented Generation) with Azure AI Search
+  - Integrates with Azure AI Search for knowledge retrieval
+  - Mock search fallback when credentials unavailable
+  - Context formatting for LLM consumption
+- **sophia/intent_router.py**: Intent detection and routing
+  - Detects query vs action intents from user messages
+  - Identifies high-risk actions requiring VictorIA escalation
+  - Extracts parameters from user requests (IPs, device names, severity)
+- **sophia/handoff.py**: VictorIA integration for action escalation
+  - Creates ticket stubs for manual review
+  - Determines ticket severity based on action type
+  - Provides user-friendly escalation messages
+- **sophia/mock_integrations.py**: Security tool integrations
+  - Mock responses from Palo Alto, Splunk, Grafana, Wazuh, Meraki
+  - Simulates security tool data for testing
+  - Security action execution with escalation flags
+
+#### VictorIA Integration
+- **victor/ticket_models.py**: Data models for tickets and action requests
+- **victor/client_stub.py**: VictorIA client stub for ticket handoff
+- **Handoff Pattern**: High-risk actions (block_ip, quarantine_device, etc.) automatically escalate to VictorIA
+- **Ticket Creation**: Automatic ticket generation with severity, context, and metadata
+
+#### Agent Model & Configuration
+- **AgentInstance**: Stores per-company Azure configuration
   - `azure_openai_endpoint`: Company-specific OpenAI endpoint URL
   - `azure_openai_key_secret_id`: Key Vault reference to OpenAI API key
   - `azure_openai_deployment`: Model deployment (e.g., gpt-4o, gpt-4o-mini)
@@ -53,24 +87,32 @@ Preferred communication style: Simple, everyday language.
   - `azure_search_key_secret_id`: Key Vault reference to search key
   - `azure_project_id`, `azure_agent_id`, `azure_vector_store_id`: Azure AI project references
 - **Access Control**: 
-  - ADMIN-only CRUD operations via `/admin/agent-instances` endpoints.
-  - Client apps authenticate via `/agents/auth/token` using company ID and access key.
-  - Backend retrieves Azure keys from Key Vault and returns with agent metadata.
+  - ADMIN-only CRUD operations via `/admin/agent-instances` endpoints
+  - Client apps authenticate via `/agents/auth/token` using company ID and access key
+  - Backend retrieves Azure keys from Key Vault and returns with agent metadata
 - **Security Pattern**:
-  - Access keys generated using `secrets.token_urlsafe(32)` for strong entropy.
-  - Keys hashed with bcrypt (cost factor 12) before storage; plain text never persisted.
-  - Azure credentials stored in Key Vault; only secret IDs stored in database.
-  - Service JWT tokens issued with `agent:invoke` scope for authenticated clients.
-- **Key Rotation**: Administrators can rotate access keys via `/admin/agent-instances/{id}/rotate-key`.
+  - Access keys generated using `secrets.token_urlsafe(32)` for strong entropy
+  - Keys hashed with bcrypt (cost factor 12) before storage; plain text never persisted
+  - Azure credentials stored in Key Vault; only secret IDs stored in database
+  - Service JWT tokens issued with `agent:invoke` scope for authenticated clients
+- **Key Rotation**: Administrators can rotate access keys via `/admin/agent-instances/{id}/rotate-key`
 - **Dynamic Agent Initialization**:
-  - Orchestrator maintains separate `project_client` and `rag_tool` per company.
-  - Agent configurations cached in memory with key `company-{company_id}`.
-  - Azure AI Agents created on-demand using company-specific credentials.
-- **Mock Mode Fallback**: Companies without Azure credentials run in mock mode with simulated responses.
-- **Configuration Testing**: `/config/test` endpoint validates Azure credential setup status.
-- **Backward Compatibility**: `/api/agents/instance/<id>` endpoint for legacy backends.
-- **Status Management**: Instances can be ACTIVE, DISABLED, or TO_PROVISION.
-- **Audit Trail**: All agent authentication and management actions logged to `AuditLog`.
+  - Agent loader maintains separate configurations per company
+  - Agent configurations cached in memory with key `company-{company_id}`
+  - Azure AI Agents created on-demand using company-specific credentials
+- **Mock Mode Fallback**: Companies without Azure credentials run in mock mode with simulated responses
+- **Configuration Testing**: `/config/test` endpoint validates Azure credential setup status
+- **Backward Compatibility**: `/api/agents/instance/<id>` endpoint for legacy backends
+- **Status Management**: Instances can be ACTIVE, DISABLED, or TO_PROVISION
+- **Audit Trail**: All agent authentication and management actions logged to `AuditLog`
+
+#### API Endpoints
+- `/health`: Health check with architecture info
+- `/chat`: Main chat endpoint with intent routing
+- `/threads/<id>`: Get or delete conversation threads
+- `/config/test`: Test Azure configuration
+- `/cache/stats`: Cache statistics
+- `/cache/invalidate`: Invalidate company cache
 
 ### Error Handling
 - **Custom Exception Hierarchy**: `TxDxAIError` base class with specialized exceptions.
