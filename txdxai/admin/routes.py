@@ -30,6 +30,11 @@ def create_agent_instance():
     azure_search_endpoint = data.get('azureSearchEndpoint')
     azure_search_key = data.get('azureSearchKey')
     
+    azure_speech_endpoint = data.get('azureSpeechEndpoint')
+    azure_speech_key = data.get('azureSpeechKey')
+    azure_speech_region = data.get('azureSpeechRegion')
+    azure_speech_voice_name = data.get('azureSpeechVoiceName', 'es-ES-ElviraNeural')
+    
     region = data.get('region')
     
     if company_id != user.company_id:
@@ -48,6 +53,11 @@ def create_agent_instance():
         secret_name = f"agent-{agent_type.lower()}-{company_id}-search-{datetime.utcnow().timestamp()}"
         azure_search_key_secret_id = store_secret(secret_name, azure_search_key)
     
+    azure_speech_key_secret_id = None
+    if azure_speech_key:
+        secret_name = f"agent-{agent_type.lower()}-{company_id}-speech-{datetime.utcnow().timestamp()}"
+        azure_speech_key_secret_id = store_secret(secret_name, azure_speech_key)
+    
     settings = {
         'region': region
     }
@@ -63,6 +73,10 @@ def create_agent_instance():
         azure_openai_deployment=azure_openai_deployment,
         azure_search_endpoint=azure_search_endpoint,
         azure_search_key_secret_id=azure_search_key_secret_id,
+        azure_speech_endpoint=azure_speech_endpoint,
+        azure_speech_key_secret_id=azure_speech_key_secret_id,
+        azure_speech_region=azure_speech_region,
+        azure_speech_voice_name=azure_speech_voice_name,
         client_access_key_hash=access_key_hash,
         settings=settings,
         status='ACTIVE' if azure_openai_endpoint else 'TO_PROVISION'
