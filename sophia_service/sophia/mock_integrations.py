@@ -120,7 +120,7 @@ def execute_security_action(action_type: str, parameters: Dict) -> Dict:
         "status": "mock_success",
         "action": action_type,
         "parameters": parameters,
-        "message": f"[MOCK] Would execute {action_type} with params: {parameters}",
+        "message": f"[MODO PRUEBA] Se ejecutaría {action_type} con parámetros: {parameters}",
         "execution_time": datetime.utcnow().isoformat(),
         "requires_victoria": action_type in ["block_ip", "quarantine_device", "emergency_response"]
     }

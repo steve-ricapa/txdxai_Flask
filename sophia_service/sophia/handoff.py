@@ -16,7 +16,7 @@ def create_ticket_stub(
     action_request: ActionRequest,
     company_id: int,
     user_id: int,
-    context: Dict = None
+    context: Dict = {}
 ) -> Dict:
     """
     Create a ticket stub for VictorIA escalation
@@ -32,16 +32,16 @@ def create_ticket_stub(
     """
     # Create ticket draft
     ticket = TicketDraft(
-        subject=f"Security Action Request: {action_request.action_type}",
+        subject=f"Solicitud de Acción de Seguridad: {action_request.action_type}",
         description=f"""
-User requested action: {action_request.original_message}
+Acción solicitada por el usuario: {action_request.original_message}
 
-Detected Intent: {action_request.intent}
-Action Type: {action_request.action_type}
-Parameters: {action_request.parameters}
-Requires Escalation: {action_request.requires_escalation}
+Intención detectada: {action_request.intent}
+Tipo de acción: {action_request.action_type}
+Parámetros: {action_request.parameters}
+Requiere escalación: {action_request.requires_escalation}
 
-This action requires manual review and execution by VictorIA.
+Esta acción requiere revisión manual y ejecución por VictorIA.
         """.strip(),
         severity=_determine_severity(action_request),
         context=context or {},

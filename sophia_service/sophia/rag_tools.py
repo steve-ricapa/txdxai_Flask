@@ -88,35 +88,35 @@ class RAGTool:
         """Mock search for testing without Azure"""
         logger.info(f"[MOCK RAG] Searching for: {query}")
         
-        # Mock knowledge base
+        # Base de conocimiento mock
         mock_knowledge = [
             {
-                "content": "SOPHIA is a multi-tenant AI agent for cybersecurity operations. It can analyze security alerts, provide threat intelligence, and coordinate incident response.",
-                "title": "SOPHIA Overview",
+                "content": "SOPHIA es un agente de IA multi-tenant para operaciones de ciberseguridad. Puede analizar alertas de seguridad, proporcionar inteligencia de amenazas y coordinar la respuesta a incidentes.",
+                "title": "Resumen de SOPHIA",
                 "score": 0.95,
                 "metadata": {"source": "documentation", "category": "sophia"}
             },
             {
-                "content": "To block an IP address, you need to configure firewall rules. This action requires VictorIA approval for security compliance.",
-                "title": "IP Blocking Procedures",
+                "content": "Para bloquear una dirección IP, necesitas configurar reglas de firewall. Esta acción requiere aprobación de VictorIA para cumplir con las políticas de seguridad.",
+                "title": "Procedimientos de Bloqueo de IP",
                 "score": 0.88,
                 "metadata": {"source": "security-procedures", "category": "firewall"}
             },
             {
-                "content": "Security alerts can be retrieved from Palo Alto Networks, Splunk, Wazuh, and other integrated security tools.",
-                "title": "Security Alert Sources",
+                "content": "Las alertas de seguridad pueden obtenerse desde Palo Alto Networks, Splunk, Wazuh y otras herramientas de seguridad integradas.",
+                "title": "Fuentes de Alertas de Seguridad",
                 "score": 0.82,
                 "metadata": {"source": "integrations", "category": "alerts"}
             },
             {
-                "content": "High-risk security actions like device quarantine, network isolation, or system shutdown require manual approval through VictorIA escalation.",
-                "title": "Security Action Escalation Policy",
+                "content": "Las acciones de seguridad de alto riesgo como cuarentena de dispositivos, aislamiento de red o apagado de sistemas requieren aprobación manual a través de escalación a VictorIA.",
+                "title": "Política de Escalación de Acciones de Seguridad",
                 "score": 0.79,
                 "metadata": {"source": "policies", "category": "escalation"}
             },
             {
-                "content": "System metrics and performance data can be monitored through Grafana dashboards. Key metrics include CPU, memory, disk usage, and network throughput.",
-                "title": "System Monitoring",
+                "content": "Las métricas del sistema y datos de rendimiento pueden monitorearse a través de dashboards de Grafana. Las métricas clave incluyen CPU, memoria, uso de disco y throughput de red.",
+                "title": "Monitoreo de Sistemas",
                 "score": 0.75,
                 "metadata": {"source": "monitoring", "category": "metrics"}
             }
@@ -148,9 +148,9 @@ class RAGTool:
         documents = self.search(query, top_k=5)
         
         if not documents:
-            return "No relevant information found in knowledge base."
+            return "No se encontró información relevante en la base de conocimiento."
         
-        context_parts = ["**Relevant Information:**\n"]
+        context_parts = ["**Información Relevante:**\n"]
         total_chars = 0
         max_chars = max_tokens * 4  # Rough approximation
         

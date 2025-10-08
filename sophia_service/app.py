@@ -138,7 +138,7 @@ def process_user_message(message: str, company_id: int, user_id: int) -> Dict:
             )
             
             return {
-                'response': f"✅ Action executed successfully:\n\n{result.get('message')}",
+                'response': f"✅ Acción ejecutada exitosamente:\n\n{result.get('message')}",
                 'intent': 'action_executed',
                 'action_result': result,
                 'tool_calls': [action_request.action_type]
@@ -153,30 +153,30 @@ def process_user_message(message: str, company_id: int, user_id: int) -> Dict:
             security_tools = {
                 'palo_alto': get_palo_alto_alerts() if 'alert' in message.lower() or 'palo' in message.lower() else None,
                 'splunk': get_splunk_logs(message, limit=5) if 'log' in message.lower() or 'splunk' in message.lower() else None,
-                'grafana': get_grafana_metrics() if 'metric' in message.lower() or 'grafana' in message.lower() else None,
+                'grafana': get_grafana_metrics() if 'metric' in message.lower() or 'grafana' in message.lower() or 'métrica' in message.lower() else None,
                 'wazuh': get_wazuh_alerts() if 'wazuh' in message.lower() else None,
-                'meraki': get_meraki_network_status() if 'meraki' in message.lower() or 'network' in message.lower() else None
+                'meraki': get_meraki_network_status() if 'meraki' in message.lower() or 'network' in message.lower() or 'red' in message.lower() else None
             }
             
             tools_used = [k for k, v in security_tools.items() if v is not None]
             tools_data = {k: v for k, v in security_tools.items() if v is not None}
             
-            response_parts = [f"**Response to your query:**\n"]
+            response_parts = []
             
             if context:
                 response_parts.append(context)
             
             if tools_data:
-                response_parts.append("\n**Security Tool Data:**\n")
+                response_parts.append("\n**Datos de Herramientas de Seguridad:**\n")
                 for tool_name, tool_data in tools_data.items():
                     response_parts.append(f"\n**{tool_name.replace('_', ' ').title()}:**")
                     if isinstance(tool_data, list) and tool_data:
-                        response_parts.append(f"Found {len(tool_data)} items")
+                        response_parts.append(f"Se encontraron {len(tool_data)} elementos")
                     elif isinstance(tool_data, dict):
-                        response_parts.append(f"Status: {tool_data.get('status', 'available')}")
+                        response_parts.append(f"Estado: {tool_data.get('status', 'disponible')}")
             
             if not context and not tools_data:
-                response_parts.append("I found information related to your query. How can I help you further?")
+                response_parts.append("Encontré información relacionada con tu consulta. ¿Cómo puedo ayudarte más?")
             
             return {
                 'response': '\n'.join(response_parts),
@@ -186,7 +186,7 @@ def process_user_message(message: str, company_id: int, user_id: int) -> Dict:
             }
         else:
             return {
-                'response': "I can help answer your security questions. Please provide more details.",
+                'response': "Puedo ayudarte a responder tus preguntas de seguridad. Por favor proporciona más detalles.",
                 'intent': 'query',
                 'tool_calls': [],
                 'mode': 'mock'
@@ -194,7 +194,7 @@ def process_user_message(message: str, company_id: int, user_id: int) -> Dict:
     
     else:
         return {
-            'response': "I'm not sure how to help with that. Can you rephrase your question or request?",
+            'response': "No estoy seguro de cómo ayudarte con eso. ¿Podrías reformular tu pregunta o solicitud?",
             'intent': 'unknown',
             'tool_calls': []
         }

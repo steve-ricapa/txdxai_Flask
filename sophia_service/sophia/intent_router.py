@@ -13,17 +13,24 @@ logger = logging.getLogger(__name__)
 class IntentRouter:
     """Routes user messages based on detected intent"""
     
-    # Action keywords that indicate user wants to perform an action
+    # Action keywords that indicate user wants to perform an action (English & Spanish)
     ACTION_KEYWORDS = {
         "block", "quarantine", "isolate", "shutdown", "disable", "remove",
         "delete", "terminate", "kill", "stop", "ban", "restrict",
-        "execute", "run", "deploy", "configure", "change", "modify"
+        "execute", "run", "deploy", "configure", "change", "modify",
+        "bloquea", "bloquear", "cuarentena", "aisla", "aislar", "apaga", "apagar",
+        "deshabilita", "deshabilitar", "elimina", "eliminar", "detén", "detener",
+        "ejecuta", "ejecutar", "despliega", "desplegar", "configura", "configurar",
+        "cambia", "cambiar", "modifica", "modificar", "borra", "borrar"
     }
     
-    # Query keywords for informational requests
+    # Query keywords for informational requests (English & Spanish)
     QUERY_KEYWORDS = {
         "show", "list", "get", "display", "what", "when", "where", "how",
-        "status", "check", "see", "view", "tell", "explain", "describe"
+        "status", "check", "see", "view", "tell", "explain", "describe",
+        "muestra", "mostrar", "lista", "listar", "obtén", "obtener", "qué", "cuándo",
+        "dónde", "cómo", "estado", "verifica", "verificar", "ve", "ver", "dime",
+        "explica", "explicar", "describe", "describir", "hay", "cuáles", "cuál"
     }
     
     # High-risk actions that always require VictorIA escalation
