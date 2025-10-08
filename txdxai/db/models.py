@@ -288,9 +288,18 @@ class AgentInstance(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id', ondelete='CASCADE'), nullable=False)
     agent_type = db.Column(db.String(50), nullable=False, default='SOPHIA')
+    
     azure_project_id = db.Column(db.String(255), nullable=True)
     azure_agent_id = db.Column(db.String(255), nullable=True)
     azure_vector_store_id = db.Column(db.String(255), nullable=True)
+    
+    azure_openai_endpoint = db.Column(db.String(500), nullable=True)
+    azure_openai_key_secret_id = db.Column(db.String(255), nullable=True)
+    azure_openai_deployment = db.Column(db.String(100), nullable=True)
+    
+    azure_search_endpoint = db.Column(db.String(500), nullable=True)
+    azure_search_key_secret_id = db.Column(db.String(255), nullable=True)
+    
     keyvault_secret_id = db.Column(db.String(255), nullable=True)
     client_access_key_hash = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='ACTIVE')
@@ -306,6 +315,9 @@ class AgentInstance(db.Model):
             'azure_project_id': self.azure_project_id,
             'azure_agent_id': self.azure_agent_id,
             'azure_vector_store_id': self.azure_vector_store_id,
+            'azure_openai_endpoint': self.azure_openai_endpoint,
+            'azure_openai_deployment': self.azure_openai_deployment,
+            'azure_search_endpoint': self.azure_search_endpoint,
             'status': self.status,
             'settings': self.settings,
             'created_at': self.created_at.isoformat() if self.created_at else None,

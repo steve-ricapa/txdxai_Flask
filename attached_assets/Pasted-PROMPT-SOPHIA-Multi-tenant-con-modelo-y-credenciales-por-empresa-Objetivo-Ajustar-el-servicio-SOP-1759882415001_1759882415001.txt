@@ -1,0 +1,82 @@
+PROMPT — SOPHIA Multi-tenant con modelo y credenciales por empresa
+
+Objetivo
+Ajustar el servicio SOPHIA para soportar multi-tenant real, donde cada empresa tiene su propia instancia de agente SOPHIA, con:
+
+Modelo configurado individualmente (por ej. GPT-4o, GPT-4o-mini, etc.).
+
+Credenciales de Azure AI personalizadas por empresa (endpoint, key, proyecto, vector store).
+
+Access key única para que la aplicación cliente de esa empresa pueda conectarse.
+
+El servicio SOPHIA debe ser modular y no depender de una sola configuración global.
+
+Backend
+
+La API REST principal ya tiene el recurso agent_instances.
+
+Allí debemos guardar para cada empresa:
+
+azure_openai_endpoint
+
+azure_openai_key (almacenada en Key Vault, aquí solo se guarda el keyvault_secret_id)
+
+azure_openai_deployment (nombre del modelo elegido)
+
+azure_ai_project_id
+
+azure_search_endpoint
+
+azure_search_key (en Key Vault, referenciado por keyvault_secret_id)
+
+vector_store_id
+
+La app cliente pedirá un token de acceso con su agent_access_key y el servicio SOPHIA obtendrá de la API del backend todos los datos de esa empresa.
+
+SOPHIA Service cambios
+
+Al iniciar un chat (/chat):
+
+Recibir companyId y agent_access_key.
+
+Validar el agent_access_key contra el backend (/agents/auth/token).
+
+Recibir del backend la configuración de esa empresa (endpoint, deployment, project_id, vector_store_id, keyvault ids…).
+
+Con esas credenciales, inicializar dinámicamente un cliente de Microsoft Agent Framework y conectarse al modelo y memoria correctos.
+
+No usar variables de entorno globales para Azure; todo debe cargarse dinámicamente según el tenant.
+
+Mantener cache de configuraciones por empresa para no reconsultar en cada mensaje (pero refrescar si expiran).
+
+Permitir que cada empresa use modelos distintos: p.ej. gpt-4o o gpt-4o-mini.
+
+Endpoints necesarios
+
+/chat → mantiene el flujo actual pero ahora inicializa el agente según la config de la empresa.
+
+/refresh → reindexa la memoria para esa empresa usando sus credenciales y vector store.
+
+(opcional) /config/test → endpoint de diagnóstico para validar que las credenciales Azure de una empresa funcionan (útil para admins).
+
+Seguridad
+
+Nunca almacenar claves en claro en SOPHIA.
+
+Siempre traer keyvault_secret_id desde el backend y leer el secreto en Key Vault (o recibirlo desencriptado a través del backend).
+
+Mantener todo multi-tenant aislado: un cliente no puede acceder a otro.
+
+Documentación
+
+Actualizar openapi.yaml de SOPHIA para reflejar estos endpoints y el flujo de autenticación basado en agent_access_key.
+
+Describir claramente que cada empresa debe configurar su propia credencial de Azure y su modelo elegido en el panel de administración del backend.
+
+Importante
+
+Mantener la arquitectura actual (SOPHIA como servicio separado) pero hacerlo multi-tenant dinámico.
+
+Nada de variables globales para el modelo; todo debe cargarse por tenant.
+
+Mantener logging y telemetría nativa de Azure para cada agente.
