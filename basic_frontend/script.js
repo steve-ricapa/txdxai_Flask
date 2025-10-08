@@ -90,6 +90,51 @@ function showResponse(elementId, data) {
     element.innerHTML = `<div class="response">${JSON.stringify(data, null, 2)}</div>`;
 }
 
+// Toggle Forms
+function showLoginForm() {
+    document.getElementById('registerForm').classList.add('hidden');
+    document.getElementById('loginForm').classList.remove('hidden');
+}
+
+function showRegisterForm() {
+    document.getElementById('loginForm').classList.add('hidden');
+    document.getElementById('registerForm').classList.remove('hidden');
+}
+
+// Register
+async function register() {
+    const company_name = document.getElementById('registerCompanyName').value;
+    const username = document.getElementById('registerUsername').value;
+    const email = document.getElementById('registerEmail').value;
+    const password = document.getElementById('registerPassword').value;
+
+    if (!company_name || !username || !email || !password) {
+        showStatus('registerStatus', 'All fields are required', 'error');
+        return;
+    }
+
+    const result = await apiRequest('POST', '/auth/register', { 
+        company_name, 
+        username, 
+        email, 
+        password 
+    });
+
+    if (result.success) {
+        authToken = result.data.access_token;
+        currentUser = result.data.user;
+        
+        // Save to localStorage
+        localStorage.setItem('authToken', authToken);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        
+        showStatus('registerStatus', 'Registration successful!', 'success');
+        setTimeout(showAdminPanel, 500);
+    } else {
+        showStatus('registerStatus', `Registration failed: ${result.error}`, 'error');
+    }
+}
+
 // Login
 async function login() {
     const username = document.getElementById('loginUsername').value;
@@ -129,15 +174,23 @@ function logout() {
     document.getElementById('chatHistory').innerHTML = '';
     document.getElementById('threadId').value = '';
     
-    document.getElementById('loginSection').classList.remove('hidden');
+    // Show register form and hide admin panel
+    document.getElementById('authSection').classList.remove('hidden');
     document.getElementById('adminPanel').classList.add('hidden');
+    showRegisterForm();
+    
+    // Clear forms
+    document.getElementById('registerCompanyName').value = '';
+    document.getElementById('registerUsername').value = '';
+    document.getElementById('registerEmail').value = '';
+    document.getElementById('registerPassword').value = '';
     document.getElementById('loginUsername').value = '';
     document.getElementById('loginPassword').value = '';
 }
 
 // Show Admin Panel
 function showAdminPanel() {
-    document.getElementById('loginSection').classList.add('hidden');
+    document.getElementById('authSection').classList.add('hidden');
     document.getElementById('adminPanel').classList.remove('hidden');
     
     document.getElementById('userDisplay').textContent = currentUser.username;
