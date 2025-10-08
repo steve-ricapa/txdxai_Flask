@@ -328,6 +328,12 @@ async function sendMessage() {
         return;
     }
 
+    // Check if user is logged in to get userId
+    if (!currentUser || !currentUser.id) {
+        showStatus('chatStatus', 'Please login first to use the chat', 'error');
+        return;
+    }
+
     // Use current thread ID if available and no manual input
     if (!threadId && currentThreadId) {
         threadId = currentThreadId;
@@ -335,6 +341,7 @@ async function sendMessage() {
 
     const requestBody = {
         companyId: parseInt(companyId),
+        userId: currentUser.id,
         agentAccessKey: agentAccessKey,
         message: message,
         threadId: threadId || undefined
