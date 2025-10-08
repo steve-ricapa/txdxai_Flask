@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TxDxAI - API Test Interface</title>
+    <title>SOPHIA Admin - TxDxAI</title>
     <style>
         * {
             margin: 0;
@@ -11,34 +11,35 @@
             box-sizing: border-box;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
+            color: #333;
         }
         .container {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
+        }
+        .card {
             background: white;
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
         h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
+            color: white;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-align: center;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
-        .subtitle {
-            color: #7f8c8d;
-            margin-bottom: 30px;
-        }
-        .section {
-            margin-bottom: 30px;
-        }
-        .section h2 {
-            color: #34495e;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 5px;
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
         }
         .form-group {
             margin-bottom: 15px;
@@ -46,64 +47,128 @@
         label {
             display: block;
             margin-bottom: 5px;
-            color: #2c3e50;
-            font-weight: 500;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.9em;
         }
-        input, select, textarea {
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        textarea,
+        select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
             font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
         }
         textarea {
-            min-height: 80px;
+            min-height: 100px;
             resize: vertical;
+            font-family: monospace;
         }
         button {
-            background: #3498db;
+            background: #667eea;
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
             margin-right: 10px;
+            margin-top: 10px;
         }
         button:hover {
-            background: #2980b9;
+            background: #5568d3;
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #5a6268;
+        }
+        button.success {
+            background: #28a745;
+        }
+        button.success:hover {
+            background: #218838;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
         }
         .response {
-            margin-top: 20px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
             padding: 15px;
-            background: #ecf0f1;
-            border-radius: 4px;
-            white-space: pre-wrap;
-            font-family: monospace;
-            font-size: 12px;
+            margin-top: 15px;
             max-height: 400px;
             overflow-y: auto;
-        }
-        .token-display {
-            margin-top: 10px;
-            padding: 10px;
-            background: #e8f4f8;
-            border-left: 3px solid #3498db;
-            word-break: break-all;
+            font-family: 'Courier New', monospace;
             font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
-        .error {
-            background: #fee;
-            border-left-color: #e74c3c;
+        .hidden {
+            display: none;
         }
-        .success {
-            background: #efe;
-            border-left-color: #27ae60;
+        .user-info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .chat-message.user {
+            background: #e3f2fd;
+            text-align: right;
+        }
+        .chat-message.sophia {
+            background: #f3e5f5;
+        }
+        .chat-history {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 15px;
         }
         .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 15px;
         }
         @media (max-width: 768px) {
             .grid {
@@ -114,387 +179,160 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔒 TxDxAI API Test Interface</h1>
-        <p class="subtitle">Multi-tenant Cybersecurity & Ticket Automation Backend</p>
-
-        <div id="tokenDisplay" class="token-display" style="display: none;">
-            <strong>Access Token:</strong> <span id="tokenValue"></span>
+        <h1>🤖 SOPHIA Admin Panel</h1>
+        
+        <!-- Login Section -->
+        <div id="loginSection" class="card">
+            <h2>🔐 Login</h2>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="loginUsername" placeholder="admin">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="password">
+            </div>
+            <button onclick="login()">Login</button>
+            <div id="loginStatus"></div>
         </div>
 
-        <div class="section">
-            <h2>🔐 Authentication</h2>
-            <div class="grid">
-                <div>
-                    <h3>Register (ADMIN)</h3>
-                    <div class="form-group">
-                        <label>Company Name</label>
-                        <input type="text" id="regCompany" placeholder="Acme Corp">
+        <!-- Admin Panel (hidden until logged in) -->
+        <div id="adminPanel" class="hidden">
+            <div class="card">
+                <div class="user-info">
+                    <div>
+                        <strong>Logged in as:</strong> <span id="userDisplay"></span> 
+                        | <strong>Company:</strong> <span id="companyDisplay"></span>
                     </div>
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" id="regUsername" placeholder="admin">
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="regEmail" placeholder="admin@acme.com">
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="regPassword" placeholder="password">
-                    </div>
-                    <button onclick="register()">Register</button>
-                </div>
-                <div>
-                    <h3>Login</h3>
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" id="loginUsername" placeholder="admin">
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="loginPassword" placeholder="password">
-                    </div>
-                    <button onclick="login()">Login</button>
+                    <button class="secondary" onclick="logout()">Logout</button>
                 </div>
             </div>
-        </div>
 
-        <div class="section">
-            <h2>🎫 Tickets</h2>
-            <div class="grid">
-                <div>
-                    <h3>Create Ticket</h3>
-                    <div class="form-group">
-                        <label>Subject</label>
-                        <input type="text" id="ticketSubject" placeholder="Security Alert">
+            <!-- Agent Instance Management -->
+            <div class="card">
+                <h2>🔧 Agent Instance Management</h2>
+                <button onclick="loadAgentInstances()">Load Instances</button>
+                <button class="success" onclick="showCreateForm()">+ Create New Instance</button>
+                <div id="instancesStatus"></div>
+                
+                <!-- Create Form -->
+                <div id="createInstanceForm" class="hidden" style="margin-top: 20px;">
+                    <h3>Create Agent Instance</h3>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Azure OpenAI Endpoint</label>
+                            <input type="text" id="azureOpenaiEndpoint" placeholder="https://your-resource.openai.azure.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Azure OpenAI Key</label>
+                            <input type="password" id="azureOpenaiKey" placeholder="Your Azure OpenAI API Key">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="ticketDescription" placeholder="Describe the issue..."></textarea>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Azure OpenAI Deployment</label>
+                            <input type="text" id="azureOpenaiDeployment" placeholder="gpt-4o">
+                        </div>
+                        <div class="form-group">
+                            <label>Azure Project ID (optional)</label>
+                            <input type="text" id="azureProjectId" placeholder="project-id">
+                        </div>
                     </div>
-                    <button onclick="createTicket()">Create Ticket</button>
-                </div>
-                <div>
-                    <h3>Get Tickets</h3>
-                    <div class="form-group">
-                        <label>Status Filter (Optional)</label>
-                        <select id="ticketStatus">
-                            <option value="">All</option>
-                            <option value="PENDING">PENDING</option>
-                            <option value="EXECUTED">EXECUTED</option>
-                            <option value="FAILED">FAILED</option>
-                            <option value="DERIVED">DERIVED</option>
-                        </select>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label>Azure Search Endpoint (optional)</label>
+                            <input type="text" id="azureSearchEndpoint" placeholder="https://your-search.search.windows.net">
+                        </div>
+                        <div class="form-group">
+                            <label>Azure Search Key (optional)</label>
+                            <input type="password" id="azureSearchKey" placeholder="Your Azure Search API Key">
+                        </div>
                     </div>
-                    <button onclick="getTickets()">Get Tickets</button>
+                    <button onclick="createAgentInstance()">Create Instance</button>
+                    <button class="secondary" onclick="hideCreateForm()">Cancel</button>
                 </div>
             </div>
-        </div>
 
-        <div class="section">
-            <h2>🔌 Integrations</h2>
-            <div class="grid">
-                <div>
-                    <h3>Create Integration</h3>
-                    <div class="form-group">
-                        <label>Provider</label>
-                        <select id="integrationProvider">
-                            <option value="palo_alto">Palo Alto</option>
-                            <option value="splunk">Splunk</option>
-                            <option value="wazuh">Wazuh</option>
-                            <option value="meraki">Meraki</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" id="integrationName" placeholder="prod-instance">
-                    </div>
-                    <div class="form-group">
-                        <label>Credentials (JSON)</label>
-                        <textarea id="integrationCredentials" placeholder='{"api_key": "your-key"}'></textarea>
-                    </div>
-                    <button onclick="createIntegration()">Create Integration</button>
+            <!-- Update Credentials -->
+            <div class="card">
+                <h2>🔄 Update Azure Credentials</h2>
+                <div class="form-group">
+                    <label>Agent Instance ID</label>
+                    <input type="number" id="updateInstanceId" placeholder="1">
                 </div>
-                <div>
-                    <h3>Get Integrations</h3>
-                    <button onclick="getIntegrations()">Get Integrations</button>
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Azure OpenAI Endpoint</label>
+                        <input type="text" id="updateAzureOpenaiEndpoint" placeholder="https://your-resource.openai.azure.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Azure OpenAI Key</label>
+                        <input type="password" id="updateAzureOpenaiKey" placeholder="New API Key">
+                    </div>
                 </div>
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Azure OpenAI Deployment</label>
+                        <input type="text" id="updateAzureOpenaiDeployment" placeholder="gpt-4o">
+                    </div>
+                    <div class="form-group">
+                        <label>Azure Search Endpoint</label>
+                        <input type="text" id="updateAzureSearchEndpoint" placeholder="https://your-search.search.windows.net">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Azure Search Key</label>
+                    <input type="password" id="updateAzureSearchKey" placeholder="New Search Key">
+                </div>
+                <button onclick="updateCredentials()">Update Credentials</button>
+                <div id="updateStatus"></div>
             </div>
-        </div>
 
-        <div class="section">
-            <h2>👥 Users</h2>
-            <button onclick="getUsers()">Get Users</button>
-            <button onclick="getCompany()">Get Company</button>
-        </div>
-
-        <div class="section">
-            <h2>🖥️ Systems</h2>
-            <button onclick="getSystemStatus()">Get System Status</button>
-            <button onclick="getAllSystems()">Get All Systems</button>
-        </div>
-
-        <div class="section">
-            <h2>🚨 Alerts</h2>
-            <div class="grid">
-                <div>
-                    <h3>Get Active Alerts</h3>
+            <!-- Test Configuration -->
+            <div class="card">
+                <h2>🧪 Test SOPHIA Configuration</h2>
+                <div class="grid">
                     <div class="form-group">
-                        <label>Limit</label>
-                        <input type="number" id="alertLimit" value="100" placeholder="100">
+                        <label>Company ID</label>
+                        <input type="number" id="testCompanyId" placeholder="1">
                     </div>
-                    <button onclick="getActiveAlerts()">Get Active Alerts</button>
-                </div>
-                <div>
-                    <h3>Resolve Alert</h3>
                     <div class="form-group">
-                        <label>Alert ID</label>
-                        <input type="number" id="resolveAlertId" placeholder="1">
+                        <label>Agent Access Key</label>
+                        <input type="text" id="testAccessKey" placeholder="Your agent access key">
                     </div>
-                    <button onclick="resolveAlert()">Resolve Alert</button>
                 </div>
+                <button onclick="testConfiguration()">Test Configuration</button>
+                <div id="testStatus"></div>
             </div>
-        </div>
 
-        <div class="section">
-            <h2>🛡️ Vulnerabilities</h2>
-            <div class="grid">
-                <div>
-                    <h3>Get Vulnerabilities</h3>
+            <!-- Chat with SOPHIA -->
+            <div class="card">
+                <h2>💬 Chat with SOPHIA</h2>
+                <div class="grid">
                     <div class="form-group">
-                        <label>Status Filter (Optional)</label>
-                        <select id="vulnStatus">
-                            <option value="">All</option>
-                            <option value="open">Open</option>
-                            <option value="patching">Patching</option>
-                            <option value="resolved">Resolved</option>
-                        </select>
+                        <label>Company ID</label>
+                        <input type="number" id="chatCompanyId" placeholder="1">
                     </div>
                     <div class="form-group">
-                        <label>Severity Filter (Optional)</label>
-                        <select id="vulnSeverity">
-                            <option value="">All</option>
-                            <option value="critical">Critical</option>
-                            <option value="high">High</option>
-                            <option value="medium">Medium</option>
-                            <option value="low">Low</option>
-                        </select>
+                        <label>Agent Access Key</label>
+                        <input type="text" id="chatAccessKey" placeholder="Your agent access key">
                     </div>
-                    <button onclick="getVulnerabilities()">Get Vulnerabilities</button>
                 </div>
-                <div>
-                    <h3>Patch Vulnerability</h3>
-                    <div class="form-group">
-                        <label>Vulnerability ID</label>
-                        <input type="number" id="patchVulnId" placeholder="1">
-                    </div>
-                    <button onclick="patchVulnerability()">Initiate Patch</button>
+                <div class="form-group">
+                    <label>Thread ID (leave empty for new thread)</label>
+                    <input type="text" id="threadId" placeholder="Optional - will create new if empty">
                 </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea id="chatMessage" placeholder="Type your message to SOPHIA..."></textarea>
+                </div>
+                <button onclick="sendMessage()">Send to SOPHIA</button>
+                <div id="chatHistory" class="chat-history"></div>
+                <div id="chatStatus"></div>
             </div>
-        </div>
-
-        <div class="section">
-            <h2>📊 Analytics</h2>
-            <div class="grid">
-                <div>
-                    <h3>Incident Analytics</h3>
-                    <div class="form-group">
-                        <label>Hours</label>
-                        <input type="number" id="incidentHours" value="24" placeholder="24">
-                    </div>
-                    <button onclick="getIncidentAnalytics()">Get Incident Analytics</button>
-                </div>
-                <div>
-                    <h3>Response Time Analytics</h3>
-                    <div class="form-group">
-                        <label>Days</label>
-                        <input type="number" id="responseTimeDays" value="7" placeholder="7">
-                    </div>
-                    <button onclick="getResponseTimeAnalytics()">Get Response Time</button>
-                </div>
-            </div>
-            <div class="grid">
-                <div>
-                    <button onclick="getVulnDistribution()">Get Vulnerability Distribution</button>
-                </div>
-                <div>
-                    <button onclick="getAnalyticsSummary()">Get Analytics Summary</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>📋 Response</h2>
-            <div id="response" class="response">No request sent yet...</div>
         </div>
     </div>
 
-    <script>
-        const API_BASE = '/api';
-        let accessToken = '';
-
-        function setToken(token) {
-            accessToken = token;
-            document.getElementById('tokenDisplay').style.display = 'block';
-            document.getElementById('tokenValue').textContent = token.substring(0, 50) + '...';
-        }
-
-        function showResponse(data, isError = false) {
-            const responseDiv = document.getElementById('response');
-            responseDiv.textContent = JSON.stringify(data, null, 2);
-            responseDiv.className = 'response ' + (isError ? 'error' : 'success');
-        }
-
-        async function apiRequest(method, endpoint, body = null) {
-            try {
-                const options = {
-                    method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                };
-
-                if (accessToken) {
-                    options.headers['Authorization'] = `Bearer ${accessToken}`;
-                }
-
-                if (body) {
-                    options.body = JSON.stringify(body);
-                }
-
-                const response = await fetch(API_BASE + endpoint, options);
-                const data = await response.json();
-
-                if (response.ok) {
-                    showResponse(data);
-                    return data;
-                } else {
-                    showResponse(data, true);
-                    return null;
-                }
-            } catch (error) {
-                showResponse({ error: error.message }, true);
-                return null;
-            }
-        }
-
-        async function register() {
-            const data = await apiRequest('POST', '/auth/register', {
-                company_name: document.getElementById('regCompany').value,
-                username: document.getElementById('regUsername').value,
-                email: document.getElementById('regEmail').value,
-                password: document.getElementById('regPassword').value
-            });
-            if (data && data.access_token) {
-                setToken(data.access_token);
-            }
-        }
-
-        async function login() {
-            const data = await apiRequest('POST', '/auth/login', {
-                username: document.getElementById('loginUsername').value,
-                password: document.getElementById('loginPassword').value
-            });
-            if (data && data.access_token) {
-                setToken(data.access_token);
-            }
-        }
-
-        async function createTicket() {
-            await apiRequest('POST', '/tickets', {
-                subject: document.getElementById('ticketSubject').value,
-                description: document.getElementById('ticketDescription').value
-            });
-        }
-
-        async function getTickets() {
-            const status = document.getElementById('ticketStatus').value;
-            const endpoint = status ? `/tickets?status=${status}` : '/tickets';
-            await apiRequest('GET', endpoint);
-        }
-
-        async function createIntegration() {
-            const credentials = document.getElementById('integrationCredentials').value;
-            try {
-                await apiRequest('POST', '/integrations', {
-                    provider: document.getElementById('integrationProvider').value,
-                    name: document.getElementById('integrationName').value,
-                    credentials: JSON.parse(credentials)
-                });
-            } catch (e) {
-                showResponse({ error: 'Invalid JSON in credentials' }, true);
-            }
-        }
-
-        async function getIntegrations() {
-            await apiRequest('GET', '/integrations');
-        }
-
-        async function getUsers() {
-            await apiRequest('GET', '/users');
-        }
-
-        async function getCompany() {
-            await apiRequest('GET', '/companies');
-        }
-
-        async function getSystemStatus() {
-            await apiRequest('GET', '/systems/status');
-        }
-
-        async function getAllSystems() {
-            await apiRequest('GET', '/systems');
-        }
-
-        async function getActiveAlerts() {
-            const limit = document.getElementById('alertLimit').value;
-            await apiRequest('GET', `/alerts/active?limit=${limit}`);
-        }
-
-        async function resolveAlert() {
-            const alertId = document.getElementById('resolveAlertId').value;
-            if (!alertId) {
-                showResponse({ error: 'Please enter an Alert ID' }, true);
-                return;
-            }
-            await apiRequest('POST', `/alerts/${alertId}/resolve`);
-        }
-
-        async function getVulnerabilities() {
-            const status = document.getElementById('vulnStatus').value;
-            const severity = document.getElementById('vulnSeverity').value;
-            let endpoint = '/vulnerabilities?';
-            if (status) endpoint += `status=${status}&`;
-            if (severity) endpoint += `severity=${severity}&`;
-            await apiRequest('GET', endpoint);
-        }
-
-        async function patchVulnerability() {
-            const vulnId = document.getElementById('patchVulnId').value;
-            if (!vulnId) {
-                showResponse({ error: 'Please enter a Vulnerability ID' }, true);
-                return;
-            }
-            await apiRequest('POST', `/vulnerabilities/${vulnId}/patch`);
-        }
-
-        async function getIncidentAnalytics() {
-            const hours = document.getElementById('incidentHours').value;
-            await apiRequest('GET', `/analytics/incidents?hours=${hours}`);
-        }
-
-        async function getResponseTimeAnalytics() {
-            const days = document.getElementById('responseTimeDays').value;
-            await apiRequest('GET', `/analytics/response-time?days=${days}`);
-        }
-
-        async function getVulnDistribution() {
-            await apiRequest('GET', '/analytics/vulnerability-distribution');
-        }
-
-        async function getAnalyticsSummary() {
-            await apiRequest('GET', '/analytics/summary');
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>

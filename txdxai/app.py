@@ -80,6 +80,10 @@ def create_app(config_class=Config):
     def index():
         return send_from_directory(app.static_folder, 'index.html')
     
+    @app.route('/favicon.ico')
+    def favicon():
+        return '', 204
+    
     @app.route('/health')
     def health():
         return jsonify({'status': 'healthy'}), 200
