@@ -151,19 +151,22 @@ def chat():
                 'error': 'Agent instance metadata unavailable - backend may need upgrade'
             }), 502
     
-    azure_project_id = agent_instance.get('azure_project_id')
-    azure_agent_id = agent_instance.get('azure_agent_id')
-    vector_store_id = agent_instance.get('azure_vector_store_id')
+    # Build Azure configuration from agent instance
+    azure_config = {
+        'azure_project_id': agent_instance.get('azure_project_id'),
+        'azure_agent_id': agent_instance.get('azure_agent_id'),
+        'azure_vector_store_id': agent_instance.get('azure_vector_store_id'),
+        'azure_openai_endpoint': agent_instance.get('azure_openai_endpoint'),
+        'azure_openai_key': agent_instance.get('azure_openai_key'),
+        'azure_openai_deployment': agent_instance.get('azure_openai_deployment'),
+        'azure_search_endpoint': agent_instance.get('azure_search_endpoint'),
+        'azure_search_key': agent_instance.get('azure_search_key')
+    }
     
-    agent_id = orchestrator.initialize_agent(
-        company_id,
-        azure_project_id or f"project-{company_id}",
-        azure_agent_id,
-        vector_store_id
-    )
+    agent_id = orchestrator.initialize_agent(company_id, azure_config)
     
     if not thread_id:
-        thread_id = orchestrator.create_thread()
+        thread_id = orchestrator.create_thread(company_id)
     
     result = orchestrator.chat(
         agent_id=agent_id,

@@ -44,35 +44,35 @@ Remember: You are READ-ONLY for monitoring. All infrastructure actions go throug
     
     def __init__(self):
         self.backend_url = config.BACKEND_URL
-        self.project_client: Optional[AIProjectClient] = None
         
-        self.rag_tool = RAGSearchTool(
-            config.AZURE_SEARCH_ENDPOINT,
-            config.AZURE_SEARCH_KEY
-        )
         self.splunk_tool = SplunkTool(self.backend_url)
         self.palo_alto_tool = PaloAltoTool(self.backend_url)
         self.grafana_tool = GrafanaTool(self.backend_url)
         self.create_ticket_tool = CreateTicketTool(self.backend_url)
         
         self.threads: Dict[str, str] = {}
-        self.agents: Dict[str, str] = {}
+        self.agents: Dict[str, Dict[str, Any]] = {}
+        self.config_cache: Dict[int, Dict[str, Any]] = {}
     
     def initialize_agent(
         self,
         company_id: int,
-        azure_project_id: str,
-        azure_agent_id: Optional[str] = None,
-        vector_store_id: Optional[str] = None
+        azure_config: Dict[str, Any]
     ) -> str:
         """
-        Initialize or get existing agent for a company
+        Initialize or get existing agent for a company with dynamic Azure configuration
         
         Args:
             company_id: Company identifier
-            azure_project_id: Azure AI project ID
-            azure_agent_id: Existing agent ID (if any)
-            vector_store_id: Vector store ID for RAG
+            azure_config: Dict containing:
+                - azure_openai_endpoint: Azure OpenAI endpoint URL
+                - azure_openai_key: Azure OpenAI API key
+                - azure_openai_deployment: Model deployment name (e.g. gpt-4o)
+                - azure_project_id: Azure AI project ID
+                - azure_agent_id: Existing agent ID (optional)
+                - azure_vector_store_id: Vector store ID for RAG (optional)
+                - azure_search_endpoint: Azure Search endpoint for RAG (optional)
+                - azure_search_key: Azure Search API key (optional)
             
         Returns:
             Agent ID
@@ -80,23 +80,38 @@ Remember: You are READ-ONLY for monitoring. All infrastructure actions go throug
         agent_key = f"company-{company_id}"
         
         if agent_key in self.agents:
-            return self.agents[agent_key]
+            return self.agents[agent_key]['agent_id']
         
         try:
-            if not AZURE_AVAILABLE or not config.AZURE_OPENAI_ENDPOINT or not config.AZURE_OPENAI_KEY:
+            azure_openai_endpoint = azure_config.get('azure_openai_endpoint')
+            azure_openai_key = azure_config.get('azure_openai_key')
+            azure_openai_deployment = azure_config.get('azure_openai_deployment')
+            azure_agent_id = azure_config.get('azure_agent_id')
+            azure_search_endpoint = azure_config.get('azure_search_endpoint')
+            azure_search_key = azure_config.get('azure_search_key')
+            
+            if not AZURE_AVAILABLE or not azure_openai_endpoint or not azure_openai_key:
                 agent_id = f"mock-agent-{company_id}"
-                self.agents[agent_key] = agent_id
+                self.agents[agent_key] = {
+                    'agent_id': agent_id,
+                    'config': azure_config
+                }
                 return agent_id
             
-            credential = AzureKeyCredential(config.AZURE_OPENAI_KEY)
+            credential = AzureKeyCredential(azure_openai_key)
             
-            self.project_client = AIProjectClient(
-                endpoint=config.AZURE_OPENAI_ENDPOINT,
+            project_client = AIProjectClient(
+                endpoint=azure_openai_endpoint,
                 credential=credential
             )
             
+            rag_tool = RAGSearchTool(
+                azure_search_endpoint or '',
+                azure_search_key or ''
+            )
+            
             tools = [
-                self.rag_tool.get_tool_definition(),
+                rag_tool.get_tool_definition(),
                 self.splunk_tool.get_tool_definition(),
                 self.palo_alto_tool.get_tool_definition(),
                 self.grafana_tool.get_tool_definition(),
@@ -106,28 +121,38 @@ Remember: You are READ-ONLY for monitoring. All infrastructure actions go throug
             if azure_agent_id:
                 agent_id = azure_agent_id
             else:
-                agent_response = self.project_client.agents.create_agent(
-                    model=config.AZURE_OPENAI_DEPLOYMENT,
+                agent_response = project_client.agents.create_agent(
+                    model=azure_openai_deployment or 'gpt-4o',
                     name=f"SOPHIA-{company_id}",
                     instructions=self.SOPHIA_SYSTEM_PROMPT,
                     tools=tools
                 )
                 agent_id = agent_response.id
             
-            self.agents[agent_key] = agent_id
+            self.agents[agent_key] = {
+                'agent_id': agent_id,
+                'project_client': project_client,
+                'config': azure_config,
+                'rag_tool': rag_tool
+            }
             return agent_id
             
         except Exception as e:
-            print(f"Error initializing agent: {e}")
+            print(f"Error initializing agent for company {company_id}: {e}")
             agent_id = f"mock-agent-{company_id}"
-            self.agents[agent_key] = agent_id
+            self.agents[agent_key] = {
+                'agent_id': agent_id,
+                'config': azure_config
+            }
             return agent_id
     
-    def create_thread(self) -> str:
-        """Create a new conversation thread"""
+    def create_thread(self, company_id: int) -> str:
+        """Create a new conversation thread for a company"""
         try:
-            if self.project_client:
-                thread_response = self.project_client.agents.create_thread()
+            agent_key = f"company-{company_id}"
+            if agent_key in self.agents and 'project_client' in self.agents[agent_key]:
+                project_client = self.agents[agent_key]['project_client']
+                thread_response = project_client.agents.create_thread()
                 return thread_response.id
             else:
                 import uuid
@@ -149,12 +174,17 @@ Remember: You are READ-ONLY for monitoring. All infrastructure actions go throug
         """Execute a tool call"""
         try:
             if tool_name == "rag_search":
-                return self.rag_tool.search(
-                    company_id,
-                    vector_store_id or "default",
-                    arguments.get("query", ""),
-                    arguments.get("top_k", 5)
-                )
+                agent_key = f"company-{company_id}"
+                rag_tool = self.agents.get(agent_key, {}).get('rag_tool')
+                if rag_tool:
+                    return rag_tool.search(
+                        company_id,
+                        vector_store_id or "default",
+                        arguments.get("query", ""),
+                        arguments.get("top_k", 5)
+                    )
+                else:
+                    return {"error": "RAG search not configured for this company"}
             
             elif tool_name == "splunk_query":
                 return self.splunk_tool.query(
@@ -221,26 +251,30 @@ Remember: You are READ-ONLY for monitoring. All infrastructure actions go throug
             Response with message and metadata
         """
         try:
-            if not self.project_client or agent_id.startswith("mock-"):
+            agent_key = f"company-{company_id}"
+            agent_data = self.agents.get(agent_key, {})
+            project_client = agent_data.get('project_client')
+            
+            if not project_client or agent_id.startswith("mock-"):
                 return {
-                    "response": f"[MOCK MODE] SOPHIA received: {message}\n\nNote: Azure AI Agents not configured. Set AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_KEY to enable full functionality.",
+                    "response": f"[MOCK MODE] SOPHIA received: {message}\n\nNote: Azure AI Agents not configured for this company. Configure Azure credentials to enable full functionality.",
                     "thread_id": thread_id,
                     "tool_calls": []
                 }
             
-            self.project_client.agents.create_message(
+            project_client.agents.create_message(
                 thread_id=thread_id,
                 role="user",
                 content=message
             )
             
-            run = self.project_client.agents.create_run(
+            run = project_client.agents.create_run(
                 thread_id=thread_id,
                 agent_id=agent_id
             )
             
             while run.status in ["queued", "in_progress", "requires_action"]:
-                run = self.project_client.agents.get_run(
+                run = project_client.agents.get_run(
                     thread_id=thread_id,
                     run_id=run.id
                 )
@@ -262,13 +296,13 @@ Remember: You are READ-ONLY for monitoring. All infrastructure actions go throug
                             "output": json.dumps(result)
                         })
                     
-                    run = self.project_client.agents.submit_tool_outputs_to_run(
+                    run = project_client.agents.submit_tool_outputs_to_run(
                         thread_id=thread_id,
                         run_id=run.id,
                         tool_outputs=tool_outputs
                     )
             
-            messages = self.project_client.agents.list_messages(thread_id=thread_id)
+            messages = project_client.agents.list_messages(thread_id=thread_id)
             latest_message = messages.data[0]
             
             response_text = ""
