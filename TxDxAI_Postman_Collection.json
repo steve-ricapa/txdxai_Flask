@@ -1,0 +1,1132 @@
+{
+	"info": {
+		"_postman_id": "txdxai-api-collection",
+		"name": "TxDxAI API",
+		"description": "Colección completa de endpoints para la API de TxDxAI - Sistema de ciberseguridad y automatización de TIC",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"company_name\": \"Mi Empresa\",\n  \"username\": \"admin\",\n  \"email\": \"admin@empresa.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Companies",
+			"item": [
+				{
+					"name": "Get Companies",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/companies",
+							"host": ["{{base_url}}"],
+							"path": ["api", "companies"]
+						}
+					}
+				},
+				{
+					"name": "Get Company by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/companies/:company_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "companies", ":company_id"],
+							"variable": [
+								{
+									"key": "company_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Company",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Nuevo Nombre de Empresa\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/companies/:company_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "companies", ":company_id"],
+							"variable": [
+								{
+									"key": "company_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users"]
+						}
+					}
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/:user_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", ":user_id"],
+							"variable": [
+								{
+									"key": "user_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"nuevo_usuario\",\n  \"email\": \"usuario@empresa.com\",\n  \"password\": \"password123\",\n  \"role\": \"USER\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users"]
+						}
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"nuevo_email@empresa.com\",\n  \"password\": \"nuevo_password123\",\n  \"role\": \"ADMIN\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/:user_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", ":user_id"],
+							"variable": [
+								{
+									"key": "user_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/:user_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", ":user_id"],
+							"variable": [
+								{
+									"key": "user_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Tickets",
+			"item": [
+				{
+					"name": "Get Tickets",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets?status=PENDING",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tickets"],
+							"query": [
+								{
+									"key": "status",
+									"value": "PENDING",
+									"description": "Filtrar por status: PENDING, EXECUTED, FAILED, DERIVED"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Ticket by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets/:ticket_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tickets", ":ticket_id"],
+							"variable": [
+								{
+									"key": "ticket_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Ticket",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"subject\": \"Problema de seguridad detectado\",\n  \"description\": \"Se ha detectado una actividad sospechosa en el servidor\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tickets",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tickets"]
+						}
+					}
+				},
+				{
+					"name": "Update Ticket",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"subject\": \"Asunto actualizado\",\n  \"description\": \"Descripción actualizada\",\n  \"status\": \"EXECUTED\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tickets/:ticket_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tickets", ":ticket_id"],
+							"variable": [
+								{
+									"key": "ticket_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Ticket",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tickets/:ticket_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tickets", ":ticket_id"],
+							"variable": [
+								{
+									"key": "ticket_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Agent Create Ticket",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Agent-Key",
+								"value": "{{agent_key}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"subject\": \"Ticket creado por agente\",\n  \"description\": \"Descripción del ticket\",\n  \"created_by_agent_instance_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tickets/agent-create",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tickets", "agent-create"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Integrations",
+			"item": [
+				{
+					"name": "Get Integrations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/integrations",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations"]
+						}
+					}
+				},
+				{
+					"name": "Get Integration by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/:integration_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", ":integration_id"],
+							"variable": [
+								{
+									"key": "integration_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Integration",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"provider\": \"splunk\",\n  \"name\": \"Splunk Principal\",\n  \"credentials\": {\n    \"api_key\": \"tu_api_key_aqui\",\n    \"url\": \"https://splunk.empresa.com\"\n  },\n  \"extra_json\": {\n    \"description\": \"Integración principal de Splunk\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/integrations",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations"]
+						}
+					}
+				},
+				{
+					"name": "Update Integration",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"provider\": \"palo_alto\",\n  \"credentials\": {\n    \"api_key\": \"nueva_api_key\"\n  },\n  \"extra_json\": {\n    \"updated\": true\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/integrations/:integration_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", ":integration_id"],
+							"variable": [
+								{
+									"key": "integration_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Integration",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/:integration_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", ":integration_id"],
+							"variable": [
+								{
+									"key": "integration_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Integration Credentials",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/integrations/:integration_id/credentials",
+							"host": ["{{base_url}}"],
+							"path": ["api", "integrations", ":integration_id", "credentials"],
+							"variable": [
+								{
+									"key": "integration_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Systems",
+			"item": [
+				{
+					"name": "Get Systems Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/systems/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "systems", "status"]
+						}
+					}
+				},
+				{
+					"name": "Get Systems",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/systems",
+							"host": ["{{base_url}}"],
+							"path": ["api", "systems"]
+						}
+					}
+				},
+				{
+					"name": "Get System by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/systems/:system_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "systems", ":system_id"],
+							"variable": [
+								{
+									"key": "system_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Alerts",
+			"item": [
+				{
+					"name": "Get Active Alerts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/alerts/active?limit=100",
+							"host": ["{{base_url}}"],
+							"path": ["api", "alerts", "active"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "100",
+									"description": "Límite de alertas a devolver"
+								},
+								{
+									"key": "since",
+									"value": "2024-01-01T00:00:00Z",
+									"description": "Fecha desde (ISO format)",
+									"disabled": true
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Resolve Alert",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/alerts/:alert_id/resolve",
+							"host": ["{{base_url}}"],
+							"path": ["api", "alerts", ":alert_id", "resolve"],
+							"variable": [
+								{
+									"key": "alert_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Vulnerabilities",
+			"item": [
+				{
+					"name": "Get Vulnerabilities",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vulnerabilities?status=open&severity=critical",
+							"host": ["{{base_url}}"],
+							"path": ["api", "vulnerabilities"],
+							"query": [
+								{
+									"key": "status",
+									"value": "open",
+									"description": "Filtrar por status"
+								},
+								{
+									"key": "severity",
+									"value": "critical",
+									"description": "Filtrar por severidad"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Vulnerability by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vulnerabilities/:vuln_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "vulnerabilities", ":vuln_id"],
+							"variable": [
+								{
+									"key": "vuln_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Patch Vulnerability",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/vulnerabilities/:vuln_id/patch",
+							"host": ["{{base_url}}"],
+							"path": ["api", "vulnerabilities", ":vuln_id", "patch"],
+							"variable": [
+								{
+									"key": "vuln_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Analytics",
+			"item": [
+				{
+					"name": "Get Incidents Analytics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/analytics/incidents?hours=24",
+							"host": ["{{base_url}}"],
+							"path": ["api", "analytics", "incidents"],
+							"query": [
+								{
+									"key": "hours",
+									"value": "24",
+									"description": "Horas hacia atrás para analizar"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Response Time Analytics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/analytics/response-time?days=7",
+							"host": ["{{base_url}}"],
+							"path": ["api", "analytics", "response-time"],
+							"query": [
+								{
+									"key": "days",
+									"value": "7",
+									"description": "Días hacia atrás para analizar"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Vulnerability Distribution",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/analytics/vulnerability-distribution",
+							"host": ["{{base_url}}"],
+							"path": ["api", "analytics", "vulnerability-distribution"]
+						}
+					}
+				},
+				{
+					"name": "Get Analytics Summary",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/analytics/summary",
+							"host": ["{{base_url}}"],
+							"path": ["api", "analytics", "summary"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Create Agent Instance",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"SOPHIA-001\",\n  \"description\": \"Agente principal de la empresa\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/agent-instances",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "agent-instances"]
+						}
+					}
+				},
+				{
+					"name": "Get Agent Instances",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/admin/agent-instances",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "agent-instances"]
+						}
+					}
+				},
+				{
+					"name": "Get Agent Instance by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/admin/agent-instances/:instance_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "agent-instances", ":instance_id"],
+							"variable": [
+								{
+									"key": "instance_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Rotate Agent Key",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/admin/agent-instances/:instance_id/rotate-key",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "agent-instances", ":instance_id", "rotate-key"],
+							"variable": [
+								{
+									"key": "instance_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Agent Instance",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"SOPHIA-001-Updated\",\n  \"description\": \"Descripción actualizada\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/agent-instances/:instance_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "agent-instances", ":instance_id"],
+							"variable": [
+								{
+									"key": "instance_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Disable Agent Instance",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/admin/agent-instances/:instance_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "agent-instances", ":instance_id"],
+							"variable": [
+								{
+									"key": "instance_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Agents",
+			"item": [
+				{
+					"name": "Get Agent Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"instance_id\": 1,\n  \"agent_key\": \"tu_agent_key_aqui\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/agents/auth/token",
+							"host": ["{{base_url}}"],
+							"path": ["api", "agents", "auth", "token"]
+						}
+					}
+				},
+				{
+					"name": "Get Agent Instance Metadata",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Agent-Key",
+								"value": "{{agent_key}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/agents/instance/:instance_id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "agents", "instance", ":instance_id"],
+							"variable": [
+								{
+									"key": "instance_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Voice",
+			"item": [
+				{
+					"name": "Transcribe Audio",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"audio_base64\": \"base64_encoded_audio_here\",\n  \"language\": \"es-ES\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/voice/transcribe",
+							"host": ["{{base_url}}"],
+							"path": ["api", "voice", "transcribe"]
+						}
+					}
+				},
+				{
+					"name": "Text to Speech",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"text\": \"Hola, este es un mensaje de prueba\",\n  \"language\": \"es-ES\",\n  \"voice_name\": \"es-ES-ElviraNeural\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/voice/speak",
+							"host": ["{{base_url}}"],
+							"path": ["api", "voice", "speak"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "agent_key",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
