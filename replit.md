@@ -42,17 +42,32 @@ Preferred communication style: Simple, everyday language.
 
 ### SOPHIA AI Agent System
 - **Purpose**: Multi-tenant AI agent provisioning for automation and security workflows.
-- **Architecture**: Company-level agent instances with secure access key authentication.
-- **Agent Model**: `AgentInstance` stores Azure AI project configuration and access credentials.
+- **Architecture**: True multi-tenant design where each company has dedicated Azure credentials.
+- **Separate Microservice**: Runs on port 8000, communicates with main backend (port 5000).
+- **Agent Model**: `AgentInstance` stores per-company Azure configuration:
+  - `azure_openai_endpoint`: Company-specific OpenAI endpoint URL
+  - `azure_openai_key_secret_id`: Key Vault reference to OpenAI API key
+  - `azure_openai_deployment`: Model deployment (e.g., gpt-4o, gpt-4o-mini)
+  - `azure_search_endpoint`: Company-specific Azure AI Search endpoint
+  - `azure_search_key_secret_id`: Key Vault reference to search key
+  - `azure_project_id`, `azure_agent_id`, `azure_vector_store_id`: Azure AI project references
 - **Access Control**: 
   - ADMIN-only CRUD operations via `/admin/agent-instances` endpoints.
   - Client apps authenticate via `/agents/auth/token` using company ID and access key.
+  - Backend retrieves Azure keys from Key Vault and returns with agent metadata.
 - **Security Pattern**:
   - Access keys generated using `secrets.token_urlsafe(32)` for strong entropy.
   - Keys hashed with bcrypt (cost factor 12) before storage; plain text never persisted.
+  - Azure credentials stored in Key Vault; only secret IDs stored in database.
   - Service JWT tokens issued with `agent:invoke` scope for authenticated clients.
 - **Key Rotation**: Administrators can rotate access keys via `/admin/agent-instances/{id}/rotate-key`.
-- **Azure Integration**: Stores Azure AI project ID, agent ID, and vector store ID for each instance.
+- **Dynamic Agent Initialization**:
+  - Orchestrator maintains separate `project_client` and `rag_tool` per company.
+  - Agent configurations cached in memory with key `company-{company_id}`.
+  - Azure AI Agents created on-demand using company-specific credentials.
+- **Mock Mode Fallback**: Companies without Azure credentials run in mock mode with simulated responses.
+- **Configuration Testing**: `/config/test` endpoint validates Azure credential setup status.
+- **Backward Compatibility**: `/api/agents/instance/<id>` endpoint for legacy backends.
 - **Status Management**: Instances can be ACTIVE, DISABLED, or TO_PROVISION.
 - **Audit Trail**: All agent authentication and management actions logged to `AuditLog`.
 
