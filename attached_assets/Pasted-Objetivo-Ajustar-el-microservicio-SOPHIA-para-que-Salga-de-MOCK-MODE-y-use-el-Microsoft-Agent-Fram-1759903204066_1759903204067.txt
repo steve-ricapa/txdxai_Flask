@@ -1,0 +1,120 @@
+Objetivo
+Ajustar el microservicio SOPHIA para que:
+
+Salga de MOCK MODE y use el Microsoft Agent Framework con credenciales reales por empresa.
+
+Mantenga una estructura limpia y modular para SOPHIA.
+
+Deje ya preparada la arquitectura para el handoff a VictorIA (sin implementar la lógica completa, solo estructura y puntos de extensión).
+
+🏗️ Estructura de archivos esperada
+sophia_service/
+  app.py                # Flask app y endpoints /chat, /config/test, /refresh
+  config.py             # Configuración general y manejo de cache
+  sophia/
+      __init__.py
+      agent_loader.py   # Inicializa SOPHIA dinámicamente según tenant
+      memory.py         # Manejo de sesiones (thread_id, memoria a futuro)
+      rag_tools.py      # Integración RAG con azure-search-documents
+      mock_integrations.py # Palo Alto, Splunk, Grafana simulados
+      intent_router.py  # Detecta intención (consulta normal vs acción)
+      handoff.py        # Puntos de extensión para derivar a VictorIA
+  victor/
+      __init__.py
+      client_stub.py    # Cliente stub para enviar tickets a VictorIA (mock)
+      ticket_models.py  # Modelos de datos del ticket
+
+⚡ Comportamiento esperado de SOPHIA
+
+1. Inicio dinámico
+
+Al recibir un company_id y agent_access_key:
+
+Llama a /agents/auth/token para obtener credenciales reales.
+
+Si encuentra azure_openai_endpoint y azure_openai_key válidos → inicializa un ProjectClient del Agent Framework con azure-ai-projects.
+
+Configura RAG con azure-search-documents si hay search_endpoint y search_key.
+
+Si falta algo → entra a MOCK MODE.
+
+2. Chat (/chat)
+
+Usa un intent_router para decidir:
+
+Pregunta informativa → responder con RAG (o mock si está en modo simulado).
+
+Solicitud de acción → NO ejecuta, sino llama a handoff.create_ticket_stub() y devuelve un mensaje al usuario:
+
+“Este caso requiere escalación a VictorIA. Ticket preliminar creado.”
+
+A futuro, el archivo handoff.py invocará a VictorIA real.
+
+3. Test config (/config/test)
+
+Crea un cliente de ProjectClient con los datos recibidos.
+
+Responde si la configuración es válida (modo real) o no (modo mock).
+
+4. Cache
+
+Configuración por company-{id} para no reconsultar en cada request.
+
+Endpoint /refresh para invalidar cache.
+
+🧪 Tools externas (por ahora mockeadas)
+
+Archivo mock_integrations.py con funciones como:
+
+def get_palo_alto_alerts():
+    return [{"id": "pa1", "severity": "high", "message": "Mock Palo Alto alert"}]
+
+def get_splunk_logs():
+    return [{"id": "sp1", "message": "Mock Splunk log"}]
+
+def get_grafana_metrics():
+    return {"cpu": 42, "memory": 73}
+
+
+SOPHIA puede “llamar” estas tools pero por ahora devuelven datos ficticios.
+
+🔧 Handoff a VictorIA (estructura preparada)
+
+Crear módulo victor/ con:
+
+client_stub.py: función send_ticket_to_victoria(ticket_data) que por ahora solo imprime/loggea que el ticket sería enviado.
+
+ticket_models.py: dataclass TicketDraft con campos subject, description, severity, context.
+
+SOPHIA, en el intent_router, cuando detecte intención de acción:
+
+from sophia.handoff import create_ticket_stub
+ticket = create_ticket_stub(user_message, context)
+
+
+Responder al usuario: “Este caso requiere intervención de VictorIA. Ticket preliminar creado.”
+
+(Más adelante se reemplazará el stub por la implementación real de VictorIA).
+
+🔐 Seguridad
+
+Mantener credenciales de Azure solo en Key Vault (el backend devuelve IDs y secretos).
+
+No imprimir keys completas en logs.
+
+Seguir usando access keys con bcrypt.
+
+✅ Resultado esperado
+
+SOPHIA deja el modo mock si existen credenciales Azure correctas.
+
+Si no hay credenciales → sigue mostrando [MOCK MODE].
+
+Código organizado para poder añadir fácilmente las tools reales y a VictorIA después.
+
+Flujo de intención → posible derivación a VictorIA ya listo (stub).
+
+/config/test permite validar configuración antes de usar.
+
+NO crear UI nueva. Mantener el frontend básico actual.
+Solo actualizar el servicio SOPHIA.
