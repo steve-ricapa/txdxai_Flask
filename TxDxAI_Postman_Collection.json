@@ -1,8 +1,8 @@
 {
         "info": {
                 "_postman_id": "txdxai-api-collection",
-                "name": "TxDxAI API - Completa",
-                "description": "Colección completa de endpoints para la API de TxDxAI - Sistema de ciberseguridad y automatización de TIC con agentes SOPHIA",
+                "name": "TxDxAI API - Configuración Básica",
+                "description": "Colección de endpoints para la API de TxDxAI - Sistema de ciberseguridad y automatización de TIC con agentes SOPHIA. Incluye configuración básica (OpenAI + Search + Speech) sin Azure AI Agent Framework.",
                 "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
         },
         "item": [
@@ -452,7 +452,7 @@
                                                 ],
                                                 "body": {
                                                         "mode": "raw",
-                                                        "raw": "{\n  \"status\": \"ACTIVE\",\n  \"azureProjectId\": \"nuevo-project-id\",\n  \"azureAgentId\": \"nuevo-agent-id\",\n  \"azureVectorStoreId\": \"nuevo-vector-store-id\",\n  \"settings\": {\n    \"custom_setting\": \"valor\"\n  }\n}"
+                                                        "raw": "{\n  \"status\": \"ACTIVE\",\n  \"azureOpenaiEndpoint\": \"https://nuevo-recurso.openai.azure.com/\",\n  \"azureOpenaiDeployment\": \"gpt-4o\",\n  \"azureSpeechVoiceName\": \"es-ES-AlvaroNeural\"\n}"
                                                 },
                                                 "url": {
                                                         "raw": "{{base_url}}/api/admin/agent-instances/:instance_id",
@@ -465,7 +465,7 @@
                                                                 }
                                                         ]
                                                 },
-                                                "description": "Actualiza configuración de la instancia del agente"
+                                                "description": "Actualiza configuración básica del agente. Puedes actualizar: status (ACTIVE/DISABLED), endpoints de Azure, deployments, región, voz, etc."
                                         },
                                         "response": []
                                 },
