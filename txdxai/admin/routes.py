@@ -144,8 +144,10 @@ def rotate_agent_key(instance_id):
     
     new_access_key = generate_access_key(40)
     new_access_key_hash = hash_access_key(new_access_key)
+    new_access_key_encrypted = encrypt_agent_key(new_access_key)
     
     instance.client_access_key_hash = new_access_key_hash
+    instance.client_access_key_encrypted = new_access_key_encrypted
     db.session.commit()
     
     log_audit('ROTATE_KEY', 'AGENT_INSTANCE', instance_id, {})
