@@ -397,6 +397,46 @@
                                         "response": []
                                 },
                                 {
+                                        "name": "Get Agent Access Key",
+                                        "event": [
+                                                {
+                                                        "listen": "test",
+                                                        "script": {
+                                                                "exec": [
+                                                                        "if (pm.response.code === 200) {",
+                                                                        "    var jsonData = pm.response.json();",
+                                                                        "    pm.environment.set(\"agent_access_key\", jsonData.agent_access_key);",
+                                                                        "    console.log(\"Agent Access Key recuperado: \" + jsonData.agent_access_key);",
+                                                                        "}"
+                                                                ],
+                                                                "type": "text/javascript"
+                                                        }
+                                                }
+                                        ],
+                                        "request": {
+                                                "method": "GET",
+                                                "header": [
+                                                        {
+                                                                "key": "Authorization",
+                                                                "value": "Bearer {{access_token}}"
+                                                        }
+                                                ],
+                                                "url": {
+                                                        "raw": "{{base_url}}/api/admin/agent-instances/:instance_id/access-key",
+                                                        "host": ["{{base_url}}"],
+                                                        "path": ["api", "admin", "agent-instances", ":instance_id", "access-key"],
+                                                        "variable": [
+                                                                {
+                                                                        "key": "instance_id",
+                                                                        "value": "{{agent_instance_id}}"
+                                                                }
+                                                        ]
+                                                },
+                                                "description": "RECUPERA EL AGENT ACCESS KEY de una instancia existente.\n\nEste endpoint te permite obtener el agent_access_key en cualquier momento:\n- Después de cerrar sesión\n- Desde otro dispositivo\n- Si perdiste la key original\n\nLa key está guardada encriptada en la base de datos y se desencripta cuando la pides.\n\n**Uso típico:**\n1. Login con tu usuario admin\n2. Llama este endpoint con el ID de tu agente\n3. Usa el agent_access_key para autenticar SOPHIA\n\n**No necesitas recrear la instancia nunca más!**"
+                                        },
+                                        "response": []
+                                },
+                                {
                                         "name": "Rotate Agent Key",
                                         "event": [
                                                 {
