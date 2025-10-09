@@ -4,14 +4,24 @@ from typing import Optional
 
 def get_encryption_key() -> bytes:
     """
-    Get or generate encryption key for agent access keys.
-    In production, this should come from environment variable or Azure Key Vault.
+    Get encryption key for agent access keys from environment variable.
+    
+    CRITICAL: This key MUST be set in production and persist across restarts.
+    Without a persistent key, encrypted values become unreadable after restarts.
+    
+    For production: Store AGENT_KEY_ENCRYPTION_KEY in Azure Key Vault or as
+    a persistent environment variable.
+    
+    For local development: Generate once with `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
+    and set the result in your .env file.
     """
     key = os.environ.get('AGENT_KEY_ENCRYPTION_KEY')
     
     if not key:
-        key = Fernet.generate_key().decode('utf-8')
-        os.environ['AGENT_KEY_ENCRYPTION_KEY'] = key
+        raise ValueError(
+            "AGENT_KEY_ENCRYPTION_KEY environment variable is required. "
+            "Generate a key with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+        )
     
     if isinstance(key, str):
         key = key.encode('utf-8')
