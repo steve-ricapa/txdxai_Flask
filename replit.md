@@ -101,9 +101,15 @@ Preferred communication style: Simple, everyday language.
 - **Security Pattern**:
   - Access keys generated using `secrets.token_urlsafe(32)` for strong entropy
   - Keys hashed with bcrypt (cost factor 12) before storage; plain text never persisted
+  - **Multi-Device Support**: Access keys also stored encrypted (AES-256 Fernet) for recovery
+    - `client_access_key_encrypted` field stores Fernet-encrypted key
+    - Encryption key persisted in `AGENT_KEY_ENCRYPTION_KEY` environment variable
+    - Enables key recovery on new devices without recreating agent instance
   - Azure credentials stored in Key Vault; only secret IDs stored in database
   - Service JWT tokens issued with `agent:invoke` scope for authenticated clients
-- **Key Rotation**: Administrators can rotate access keys via `/admin/agent-instances/{id}/rotate-key`
+- **Key Management**:
+  - **Key Recovery**: `GET /api/admin/agent-instances/{id}/access-key` - Retrieve encrypted access key (ADMIN only)
+  - **Key Rotation**: `POST /api/admin/agent-instances/{id}/rotate-key` - Generate new access key and invalidate old one
 - **Dynamic Agent Initialization**:
   - Agent loader maintains separate configurations per company
   - Agent configurations cached in memory with key `company-{company_id}`

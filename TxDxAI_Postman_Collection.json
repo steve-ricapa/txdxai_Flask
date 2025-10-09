@@ -2,7 +2,7 @@
         "info": {
                 "_postman_id": "txdxai-api-collection",
                 "name": "TxDxAI API - Configuración Básica",
-                "description": "Colección de endpoints para la API de TxDxAI - Sistema de ciberseguridad y automatización de TIC con agentes SOPHIA. Incluye configuración básica (OpenAI + Search + Speech) sin Azure AI Agent Framework.",
+                "description": "Colección de endpoints para la API de TxDxAI - Sistema de ciberseguridad y automatización de TIC con agentes SOPHIA.\n\n## 🔐 Multi-Dispositivo: Recuperación de Agent Access Key\n\n**PROBLEMA RESUELTO:** Ahora puedes recuperar tu `agent_access_key` en cualquier dispositivo sin recrear la instancia.\n\n### ¿Cómo funciona?\n1. Creas tu agente una vez → Recibes el `agent_access_key`\n2. La key se guarda **encriptada** en la base de datos (AES-256 Fernet)\n3. Desde cualquier dispositivo:\n   - Login con tu usuario ADMIN\n   - Llama `GET /api/admin/agent-instances/:id/access-key`\n   - Recibes tu key original desencriptada\n\n### Seguridad:\n- Solo usuarios ADMIN de la misma compañía\n- Key encriptada con Fernet (clave persistente en `AGENT_KEY_ENCRYPTION_KEY`)\n- Hash bcrypt para autenticación del agente\n\n## Configuración Básica\n- Incluye configuración básica (OpenAI + Search + Speech)\n- NO requiere Azure AI Agent Framework\n- Es la misma configuración que usa el panel de admin básico",
                 "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
         },
         "item": [

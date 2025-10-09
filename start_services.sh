@@ -3,6 +3,11 @@
 # TxDxAI - Production Service Startup Script
 # Starts both Backend and SOPHIA services in parallel for VM Deployment
 
+# Load environment variables from .env file
+if [ -f .env ]; then
+    export $(cat .env | grep -v '^#' | xargs)
+fi
+
 echo "Starting TxDxAI services..."
 
 # Start Backend API with Gunicorn (Port 5000)

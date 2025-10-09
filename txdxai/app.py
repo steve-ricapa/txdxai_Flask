@@ -4,6 +4,9 @@ from txdxai.extensions import db, jwt, migrate, cors
 from txdxai.common.errors import handle_error, TxDxAIError
 from flasgger import Swagger
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def create_app(config_class=Config):
     app = Flask(__name__, static_folder='../basic_frontend')
