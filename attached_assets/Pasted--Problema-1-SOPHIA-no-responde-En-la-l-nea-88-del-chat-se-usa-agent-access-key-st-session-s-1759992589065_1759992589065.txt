@@ -1,0 +1,61 @@
+🔍 Problema 1: SOPHIA no responde
+En la línea 88 del chat, se usa:
+
+agent_access_key=st.session_state.agent_access_key
+Pero si agent_access_key no está en session_state (por ejemplo, después de cerrar sesión), SOPHIA no puede autenticarse.
+
+🔍 Problema 2: Credenciales no persisten después de logout
+El agent_access_key se guarda en session_state solo cuando creas el agente, pero cuando cierras sesión, el session_state se borra. Cuando vuelves a entrar, Settings carga el agente con GET /api/admin/agent-instances, pero ese endpoint probablemente NO retorna el agent_access_key por seguridad (las keys no se deben exponer en GET requests).
+
+
+Searched for "How is agent_access_key stored and retrieved? Check if it's saved after login or if there's a way to get it from the backend after agent creation"
+
+Reimagined agent access key retrieval (7 seconds)
+Ahora entiendo el problema completo. Déjame revisar la colección de Postman para ver cómo se debe obtener el agent_access_key después de login:
+
+
+Opened attached_assets/TxDxAI_Postman_Collection (2)_1759989782114.json
+
+Decided on next user question (9 seconds)
+¡Encontré el problema! Aquí está el análisis:
+
+🔍 Diagnóstico del Problema
+Problema Principal: agent_access_key se pierde al cerrar sesión
+Cuando CREAS el agente: El backend retorna agent_access_key UNA VEZ
+Se guarda en session_state: st.session_state.agent_access_key
+Al cerrar sesión: Session state se borra completamente
+Al volver a entrar: No hay forma de recuperar el agent_access_key
+Por qué SOPHIA no responde
+El chat intenta usar st.session_state.agent_access_key
+Si está vacío o es None, SOPHIA no puede autenticarse
+El backend rechaza la petición sin el key válido
+Por qué Settings dice "no configured"
+GET /api/admin/agent-instances probablemente NO retorna el agent_access_key por seguridad
+Solo retorna metadata del agente (id, status, etc.)
+Settings verifica si existe agente, pero no puede recuperar el access key
+💡 Soluciones Posibles
+Según la colección Postman, veo dos opciones:
+
+Opción 1: Endpoint de Rotación de Key
+POST /api/admin/agent-instances/:id/rotate-key
+Genera un nuevo agent_access_key
+El anterior deja de funcionar
+Retorna el nuevo key que puedes guardar
+Opción 2: Endpoint Público de Metadata
+GET /api/agents/instance/:id (público, sin auth)
+Dice que retorna "metadata y credenciales del agente"
+¿Incluirá el agent_access_key?
+📋 Plan de Solución
+Te propongo implementar una de estas estrategias:
+
+Agregar botón "Rotar Agent Key" en Settings:
+
+Llama a POST /api/admin/agent-instances/:id/rotate-key
+Guarda el nuevo key en session_state
+El usuario debe hacer esto cada vez que inicia sesión
+Auto-recuperar el key al cargar Settings:
+
+Si existe agente pero no hay agent_access_key en session
+Intentar GET /api/agents/instance/:id para ver si retorna el key
+O automáticamente rotar el key y guardarlo
+¿Qué opción prefieres? ¿O el backend tiene otra forma de manejar esto que no estoy viendo en la colección?
