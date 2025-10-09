@@ -4,7 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["ffmpeg", "libyaml"]
+packages = ["cargo", "ffmpeg", "libiconv", "libxcrypt", "libyaml", "openssl", "pkg-config", "rustc"]
 
 [workflows]
 runButton = "Project"
