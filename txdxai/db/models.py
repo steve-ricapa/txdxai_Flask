@@ -307,6 +307,7 @@ class AgentInstance(db.Model):
     
     keyvault_secret_id = db.Column(db.String(255), nullable=True)
     client_access_key_hash = db.Column(db.String(255), nullable=False)
+    client_access_key_encrypted = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), nullable=False, default='ACTIVE')
     settings = db.Column(db.JSON, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
