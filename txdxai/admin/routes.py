@@ -7,6 +7,7 @@ from txdxai.db.models import AgentInstance
 from txdxai.common.errors import NotFoundError, ValidationError, ForbiddenError
 from txdxai.common.utils import get_current_user, admin_required, log_audit
 from txdxai.security.keys import generate_access_key, hash_access_key
+from txdxai.security.encryption import encrypt_agent_key, decrypt_agent_key
 from txdxai.integrations.keyvault import store_secret
 
 @admin_bp.route('/agent-instances', methods=['POST'])
@@ -42,6 +43,7 @@ def create_agent_instance():
     
     access_key = generate_access_key(40)
     access_key_hash = hash_access_key(access_key)
+    access_key_encrypted = encrypt_agent_key(access_key)
     
     azure_openai_key_secret_id = None
     if azure_openai_key:
@@ -78,6 +80,7 @@ def create_agent_instance():
         azure_speech_region=azure_speech_region,
         azure_speech_voice_name=azure_speech_voice_name,
         client_access_key_hash=access_key_hash,
+        client_access_key_encrypted=access_key_encrypted,
         settings=settings,
         status='ACTIVE' if azure_openai_endpoint else 'TO_PROVISION'
     )
