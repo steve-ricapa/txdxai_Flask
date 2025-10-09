@@ -194,6 +194,37 @@ def update_agent_instance(instance_id):
     }), 200
 
 
+@admin_bp.route('/agent-instances/<instance_id>/access-key', methods=['GET'])
+@jwt_required()
+@admin_required
+def get_agent_access_key(instance_id):
+    """
+    Retrieve the agent access key for a specific instance.
+    This endpoint allows users to recover their agent key after logout or on different devices.
+    """
+    user = get_current_user()
+    
+    instance = AgentInstance.query.get(instance_id)
+    if not instance or instance.company_id != user.company_id:
+        raise NotFoundError('Agent instance not found')
+    
+    if not instance.client_access_key_encrypted:
+        raise ValidationError('No access key available for this instance. Please rotate the key.')
+    
+    access_key = decrypt_agent_key(instance.client_access_key_encrypted)
+    
+    if not access_key:
+        raise ValidationError('Unable to decrypt access key. Please rotate the key.')
+    
+    log_audit('RETRIEVE_KEY', 'AGENT_INSTANCE', instance_id, {})
+    
+    return jsonify({
+        'agent_access_key': access_key,
+        'instance_id': instance.id,
+        'agent_type': instance.agent_type
+    }), 200
+
+
 @admin_bp.route('/agent-instances/<instance_id>', methods=['DELETE'])
 @jwt_required()
 @admin_required
