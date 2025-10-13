@@ -45,6 +45,10 @@ Preferred communication style: Simple, everyday language.
 - **Purpose**: Multi-tenant AI agent provisioning for automation and security workflows.
 - **Architecture**: Modular design with intent routing and VictorIA handoff capabilities.
 - **Separate Microservice**: Runs on port 8000, communicates with main backend (port 5000).
+- **Chat Proxy**: Backend exposes `/api/chat` endpoint that proxies requests to SOPHIA service
+  - Enables single entry point (port 5000) for external frontends (Streamlit, mobile apps)
+  - SOPHIA validates credentials by calling backend `/api/agents/auth/token`
+  - Architecture: `Frontend → Backend (5000) → SOPHIA (8000)`
 
 #### Modular Architecture (v2.0)
 - **sophia/agent_loader.py**: Dynamic per-tenant agent initialization with Azure AI integration
@@ -110,6 +114,9 @@ Preferred communication style: Simple, everyday language.
 - **Key Management**:
   - **Key Recovery**: `GET /api/admin/agent-instances/{id}/access-key` - Retrieve encrypted access key (ADMIN only)
   - **Key Rotation**: `POST /api/admin/agent-instances/{id}/rotate-key` - Generate new access key and invalidate old one
+  - **Status Update**: `PATCH /api/admin/agent-instances/{id}/status` - Update agent status (ACTIVE/TO_PROVISION/DISABLED)
+    - ⚠️ Agent must be ACTIVE to authenticate for chat/voice operations
+    - New instances default to TO_PROVISION status
 - **Dynamic Agent Initialization**:
   - Agent loader maintains separate configurations per company
   - Agent configurations cached in memory with key `company-{company_id}`

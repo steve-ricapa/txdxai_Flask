@@ -2,7 +2,7 @@
         "info": {
                 "_postman_id": "txdxai-api-collection",
                 "name": "TxDxAI API - Configuración Básica",
-                "description": "Colección de endpoints para la API de TxDxAI - Sistema de ciberseguridad y automatización de TIC con agentes SOPHIA.\n\n## 🔐 Multi-Dispositivo: Recuperación de Agent Access Key\n\n**PROBLEMA RESUELTO:** Ahora puedes recuperar tu `agent_access_key` en cualquier dispositivo sin recrear la instancia.\n\n### ¿Cómo funciona?\n1. Creas tu agente una vez → Recibes el `agent_access_key`\n2. La key se guarda **encriptada** en la base de datos (AES-256 Fernet)\n3. Desde cualquier dispositivo:\n   - Login con tu usuario ADMIN\n   - Llama `GET /api/admin/agent-instances/:id/access-key`\n   - Recibes tu key original desencriptada\n\n### Seguridad:\n- Solo usuarios ADMIN de la misma compañía\n- Key encriptada con Fernet (clave persistente en `AGENT_KEY_ENCRYPTION_KEY`)\n- Hash bcrypt para autenticación del agente\n\n## Configuración Básica\n- Incluye configuración básica (OpenAI + Search + Speech)\n- NO requiere Azure AI Agent Framework\n- Es la misma configuración que usa el panel de admin básico",
+                "description": "Colección de endpoints para la API de TxDxAI - Sistema de ciberseguridad y automatización de TIC con agentes SOPHIA.\n\n## 💬 Chat con SOPHIA (Proxy Pattern)\n\n**NUEVO:** Endpoint `/api/chat` para frontends externos (Streamlit, mobile, etc.)\n\n### Arquitectura\n```\nFrontend → Backend (port 5000) → SOPHIA (port 8000)\n            ↓ valida credentials\n        /api/agents/auth/token\n```\n\n### Uso desde Frontend Externo\n1. Usuario hace login → Obtiene `access_token` (JWT del usuario)\n2. Admin crea agent instance → Obtiene `agent_access_key`\n3. ⚠️ **IMPORTANTE**: Actualiza agent status a `ACTIVE`\n   - Endpoint: `PATCH /api/admin/agent-instances/{id}/status`\n   - Body: `{\"status\": \"ACTIVE\"}`\n4. Frontend llama `/api/chat` con:\n   - Header: `Authorization: Bearer {access_token}`\n   - Body: `{companyId, userId, agentAccessKey, message}`\n\n### Seguridad del Proxy\n- ✅ Backend valida agent access key (bcrypt check)\n- ✅ Verifica status ACTIVE antes de reenviar\n- ✅ Confirma userId coincide con JWT\n- ✅ Solo agentes ACTIVE pueden autenticarse\n\n### ¿Por qué usar el proxy?\n- ✅ Un solo punto de entrada (puerto 5000)\n- ✅ SOPHIA en puerto 8000 permanece interno\n- ✅ Ideal para despliegues externos (Streamlit Cloud, mobile apps)\n\n## 🔐 Multi-Dispositivo: Recuperación de Agent Access Key\n\n**PROBLEMA RESUELTO:** Ahora puedes recuperar tu `agent_access_key` en cualquier dispositivo sin recrear la instancia.\n\n### ¿Cómo funciona?\n1. Creas tu agente una vez → Recibes el `agent_access_key`\n2. La key se guarda **encriptada** en la base de datos (AES-256 Fernet)\n3. Desde cualquier dispositivo:\n   - Login con tu usuario ADMIN\n   - Llama `GET /api/admin/agent-instances/:id/access-key`\n   - Recibes tu key original desencriptada\n\n### Seguridad:\n- Solo usuarios ADMIN de la misma compañía\n- Key encriptada con Fernet (clave persistente en `AGENT_KEY_ENCRYPTION_KEY`)\n- Hash bcrypt para autenticación del agente\n\n## Configuración Básica\n- Incluye configuración básica (OpenAI + Search + Speech)\n- NO requiere Azure AI Agent Framework\n- Es la misma configuración que usa el panel de admin básico",
                 "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
         },
         "item": [
@@ -473,6 +473,39 @@
                                                         ]
                                                 },
                                                 "description": "Genera una nueva clave de acceso para el agente. La anterior deja de funcionar."
+                                        },
+                                        "response": []
+                                },
+                                {
+                                        "name": "Update Agent Status ⚡ (ACTIVE/TO_PROVISION/DISABLED)",
+                                        "request": {
+                                                "method": "PATCH",
+                                                "header": [
+                                                        {
+                                                                "key": "Authorization",
+                                                                "value": "Bearer {{access_token}}"
+                                                        },
+                                                        {
+                                                                "key": "Content-Type",
+                                                                "value": "application/json"
+                                                        }
+                                                ],
+                                                "body": {
+                                                        "mode": "raw",
+                                                        "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+                                                },
+                                                "url": {
+                                                        "raw": "{{base_url}}/api/admin/agent-instances/:instance_id/status",
+                                                        "host": ["{{base_url}}"],
+                                                        "path": ["api", "admin", "agent-instances", ":instance_id", "status"],
+                                                        "variable": [
+                                                                {
+                                                                        "key": "instance_id",
+                                                                        "value": "{{agent_instance_id}}"
+                                                                }
+                                                        ]
+                                                },
+                                                "description": "⚡ **ENDPOINT CLAVE PARA ACTIVAR TU AGENTE**\n\n**PROBLEMA:** Después de crear un agente, su status es `TO_PROVISION` y NO puede autenticarse para chat.\n\n**SOLUCIÓN:** Usa este endpoint para cambiar el status a `ACTIVE`:\n```json\n{\"status\": \"ACTIVE\"}\n```\n\n**Status disponibles:**\n- `ACTIVE` → Agente listo para usar (requerido para chat)\n- `TO_PROVISION` → Pendiente de configuración (no puede autenticarse)\n- `DISABLED` → Agente deshabilitado\n\n**Flujo completo:**\n1. Crear agente → Status: `TO_PROVISION`\n2. **Activar con este endpoint** → Status: `ACTIVE`\n3. Ahora puedes usar `/api/chat` o `/api/voice/*`"
                                         },
                                         "response": []
                                 },
@@ -1214,6 +1247,54 @@
                                                         "host": ["{{base_url}}"],
                                                         "path": ["api", "analytics", "summary"]
                                                 }
+                                        },
+                                        "response": []
+                                }
+                        ]
+                },
+                {
+                        "name": "10. Chat (SOPHIA via Proxy)",
+                        "item": [
+                                {
+                                        "name": "Chat con SOPHIA (vía Backend)",
+                                        "event": [
+                                                {
+                                                        "listen": "test",
+                                                        "script": {
+                                                                "exec": [
+                                                                        "if (pm.response.code === 200) {",
+                                                                        "    var jsonData = pm.response.json();",
+                                                                        "    console.log(\"SOPHIA Response: \" + jsonData.response);",
+                                                                        "    console.log(\"Intent: \" + jsonData.intent);",
+                                                                        "    console.log(\"Thread ID: \" + jsonData.threadId);",
+                                                                        "}"
+                                                                ],
+                                                                "type": "text/javascript"
+                                                        }
+                                                }
+                                        ],
+                                        "request": {
+                                                "method": "POST",
+                                                "header": [
+                                                        {
+                                                                "key": "Authorization",
+                                                                "value": "Bearer {{access_token}}"
+                                                        },
+                                                        {
+                                                                "key": "Content-Type",
+                                                                "value": "application/json"
+                                                        }
+                                                ],
+                                                "body": {
+                                                        "mode": "raw",
+                                                        "raw": "{\n  \"companyId\": 1,\n  \"userId\": 1,\n  \"agentAccessKey\": \"{{agent_access_key}}\",\n  \"message\": \"Hola SOPHIA, ¿cómo estás?\",\n  \"threadId\": null\n}"
+                                                },
+                                                "url": {
+                                                        "raw": "{{base_url}}/api/chat",
+                                                        "host": ["{{base_url}}"],
+                                                        "path": ["api", "chat"]
+                                                },
+                                                "description": "**Chat con SOPHIA a través del proxy del backend (port 5000)**\n\n⚠️ **IMPORTANTE - Agent Status ACTIVE Required:**\n- El agente debe estar en status `ACTIVE` para autenticarse\n- Si acabas de crear el agente, verifica su status con `GET /api/admin/agent-instances`\n- Si está en `TO_PROVISION`, usa el endpoint:\n  `PATCH /api/admin/agent-instances/{id}/status` con body `{\"status\": \"ACTIVE\"}`\n\n**Seguridad del Proxy:**\n- ✅ Valida agent access key contra bcrypt hash\n- ✅ Verifica status ACTIVE del agente\n- ✅ Confirma autorización de empresa y usuario\n- ✅ Bloquea agentes DISABLED o TO_PROVISION\n\n**Arquitectura:**\n- Frontend → Backend (5000) → SOPHIA (8000)\n- Backend valida credentials antes de reenviar\n- Usa esta ruta para frontends externos (Streamlit, etc.)\n\n**PARAMETROS:**\n- companyId: ID de la empresa (requerido)\n- userId: ID del usuario (requerido, debe coincidir con JWT)\n- agentAccessKey: Clave del agente (requerido, validada contra hash)\n- message: Mensaje para SOPHIA (requerido)\n- threadId: ID del hilo de conversación (opcional, para continuar conversación)\n\n**RESPUESTA:**\n```json\n{\n  \"response\": \"Respuesta de SOPHIA\",\n  \"intent\": \"query|action|action_escalated\",\n  \"threadId\": \"thread_1_abc123\",\n  \"ticketId\": 123,  // solo si escalado a VictorIA\n  \"toolCalls\": [\"rag_search\"],\n  \"agentId\": \"mock-agent-1\"\n}\n```"
                                         },
                                         "response": []
                                 }

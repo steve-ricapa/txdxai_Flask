@@ -162,6 +162,10 @@ def rotate_agent_key(instance_id):
 @jwt_required()
 @admin_required
 def update_agent_instance(instance_id):
+    """
+    Update agent instance configuration (excluding status).
+    Use PATCH /api/admin/agent-instances/{id}/status to update status.
+    """
     user = get_current_user()
     data = request.get_json()
     
@@ -169,8 +173,9 @@ def update_agent_instance(instance_id):
     if not instance or instance.company_id != user.company_id:
         raise NotFoundError('Agent instance not found')
     
+    # Status updates must go through dedicated endpoint
     if 'status' in data:
-        instance.status = data['status']
+        raise ValidationError('Status cannot be updated via this endpoint. Use PATCH /api/admin/agent-instances/{id}/status instead')
     
     if 'settings' in data:
         instance.settings = data['settings']
@@ -222,6 +227,42 @@ def get_agent_access_key(instance_id):
         'agent_access_key': access_key,
         'instance_id': instance.id,
         'agent_type': instance.agent_type
+    }), 200
+
+
+@admin_bp.route('/agent-instances/<instance_id>/status', methods=['PATCH'])
+@jwt_required()
+@admin_required
+def update_agent_status(instance_id):
+    """Update agent instance status (ACTIVE, TO_PROVISION, DISABLED)"""
+    user = get_current_user()
+    data = request.get_json()
+    
+    if not data or 'status' not in data:
+        raise ValidationError('Status is required')
+    
+    new_status = data['status']
+    valid_statuses = ['ACTIVE', 'TO_PROVISION', 'DISABLED']
+    
+    if new_status not in valid_statuses:
+        raise ValidationError(f'Status must be one of: {", ".join(valid_statuses)}')
+    
+    instance = AgentInstance.query.get(instance_id)
+    if not instance or instance.company_id != user.company_id:
+        raise NotFoundError('Agent instance not found')
+    
+    old_status = instance.status
+    instance.status = new_status
+    db.session.commit()
+    
+    log_audit('UPDATE_STATUS', 'AGENT_INSTANCE', instance_id, {
+        'old_status': old_status,
+        'new_status': new_status
+    })
+    
+    return jsonify({
+        'message': f'Agent status updated from {old_status} to {new_status}',
+        'agent_instance': instance.to_dict()
     }), 200
 
 
