@@ -64,6 +64,7 @@ def create_app(config_class=Config):
     from txdxai.admin import admin_bp
     from txdxai.agents import agents_bp
     from txdxai.voice import voice_bp
+    from txdxai.chat import chat_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(companies_bp)
@@ -77,6 +78,7 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp)
     app.register_blueprint(agents_bp)
     app.register_blueprint(voice_bp)
+    app.register_blueprint(chat_bp)
     
     app.register_error_handler(TxDxAIError, handle_error)
     app.register_error_handler(Exception, handle_error)

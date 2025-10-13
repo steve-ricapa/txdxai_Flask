@@ -3,7 +3,7 @@ from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from txdxai.chat import chat_bp
 from txdxai.common.errors import ValidationError, TxDxAIError
-from txdxai.common.audit import log_audit
+from txdxai.common.utils import log_audit
 from txdxai.db.models import User, AgentInstance
 from txdxai.extensions import db
 import os
