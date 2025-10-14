@@ -97,10 +97,28 @@ class RAGTool:
                 "metadata": {"source": "documentation", "category": "sophia"}
             },
             {
+                "content": "Un firewall es un sistema de seguridad de red que monitorea y controla el tráfico entrante y saliente basándose en reglas de seguridad predeterminadas. Actúa como una barrera entre una red interna confiable y redes externas no confiables como Internet. Los firewalls pueden ser de hardware, software o una combinación de ambos. Funciones principales: filtrado de paquetes, inspección de estado, prevención de intrusiones y control de aplicaciones.",
+                "title": "¿Qué es un Firewall?",
+                "score": 0.92,
+                "metadata": {"source": "education", "category": "concepts"}
+            },
+            {
                 "content": "Para bloquear una dirección IP, necesitas configurar reglas de firewall. Esta acción requiere aprobación de VictorIA para cumplir con las políticas de seguridad.",
                 "title": "Procedimientos de Bloqueo de IP",
                 "score": 0.88,
-                "metadata": {"source": "security-procedures", "category": "firewall"}
+                "metadata": {"source": "security-procedures", "category": "procedures"}
+            },
+            {
+                "content": "Un IDS (Sistema de Detección de Intrusiones) es una herramienta de seguridad que monitorea el tráfico de red en busca de actividades sospechosas y violaciones de políticas. A diferencia de un firewall que bloquea el tráfico, un IDS solo detecta y alerta sobre amenazas. Un IPS (Sistema de Prevención de Intrusiones) va un paso más allá al detectar Y bloquear automáticamente las amenazas.",
+                "title": "IDS vs IPS",
+                "score": 0.90,
+                "metadata": {"source": "education", "category": "concepts"}
+            },
+            {
+                "content": "Un ataque DDoS (Distributed Denial of Service) es un intento malicioso de interrumpir el tráfico normal de un servidor, servicio o red inundándolo con tráfico de Internet. Los ataques DDoS utilizan múltiples sistemas comprometidos como fuentes de tráfico de ataque. Las defensas incluyen rate limiting, filtrado de tráfico, CDN y servicios anti-DDoS especializados.",
+                "title": "Ataques DDoS",
+                "score": 0.89,
+                "metadata": {"source": "education", "category": "threats"}
             },
             {
                 "content": "Las alertas de seguridad pueden obtenerse desde Palo Alto Networks, Splunk, Wazuh y otras herramientas de seguridad integradas.",
@@ -119,6 +137,18 @@ class RAGTool:
                 "title": "Monitoreo de Sistemas",
                 "score": 0.75,
                 "metadata": {"source": "monitoring", "category": "metrics"}
+            },
+            {
+                "content": "Un ransomware es un tipo de malware que cifra los archivos de la víctima y exige un pago (rescate) para restaurar el acceso. Las medidas preventivas incluyen: backups regulares, actualizaciones de seguridad, educación de usuarios, segmentación de red y sistemas de detección de comportamiento anómalo.",
+                "title": "Ransomware",
+                "score": 0.87,
+                "metadata": {"source": "education", "category": "threats"}
+            },
+            {
+                "content": "La autenticación multifactor (MFA) es un método de seguridad que requiere que los usuarios proporcionen dos o más factores de verificación para acceder a un recurso. Los factores pueden ser: algo que sabes (contraseña), algo que tienes (token/teléfono), o algo que eres (biometría). MFA reduce significativamente el riesgo de acceso no autorizado.",
+                "title": "Autenticación Multifactor (MFA)",
+                "score": 0.86,
+                "metadata": {"source": "education", "category": "concepts"}
             }
         ]
         
@@ -142,8 +172,13 @@ class RAGTool:
                 match_count += 5
             elif 'alert' in query_lower and doc['metadata']['category'] == 'alerts':
                 match_count += 5
-            elif 'firewall' in query_lower or 'bloque' in query_lower and doc['metadata']['category'] == 'firewall':
-                match_count += 5
+            
+            # Priority boost for educational/conceptual content when user asks "what is" questions
+            if any(phrase in query_lower for phrase in ['qué es', 'que es', 'what is', 'cómo funciona', 'explica', 'explain']):
+                if doc['metadata']['category'] in ['concepts', 'education', 'threats']:
+                    match_count += 15  # Strong boost for educational content
+                elif doc['metadata']['category'] in ['procedures']:
+                    match_count -= 5   # Reduce procedural content for conceptual questions
             
             if match_count > 0:
                 scored_docs.append((doc, match_count))
